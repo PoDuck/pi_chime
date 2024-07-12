@@ -1,0 +1,115 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Clip List{% endblock title %}
+{% block custom_css %}
+    <style>
+        body.dragging, body.dragging * {
+            cursor: move !important;
+        }
+
+        .dragged {
+            position: absolute;
+            opacity: 0.5;
+            z-index: 2000;
+        }
+
+        ol.clips li:hover {
+            cursor: move !important;
+        }
+
+        ol.clips li.placeholder {
+            position: relative;
+            /** More li styles **/
+        }
+
+        ol.clips li.placeholder:before {
+            position: absolute;
+            /** Define arrowhead **/
+        }
+
+        .list-group-item {
+            display: list-item;
+            list-style-position: inside
+        }
+
+    </style>
+{% endblock custom_css %}
+{% block content %}
+    <ol class="clips list-group">
+        <!-- Iterate over object_list -->
+        {% for object in object_list %}
+            <!-- Display Objects -->
+            <li data-id="{{ object.id }}" class="list-group-item d-flex align-items-center">
+                <span class="pull-left">
+                    <img src="{{ object.thumbnail_url }}" width="30" height="30" class="img-responsive img-rounded"
+                         alt="icon"/>
+                    <a class="play" data-id="{{ object.id }}" href="{{ object.file_url }}">{{ object.title }}</a>
+                </span>
+                <span class="ms-auto">
+                    <audio controls>
+                        <source src="{{ object.file_url }}" type="audio/mp3">
+                        Your browser does not support the audio element.
+                    </audio>
+                </span>
+            </li>
+            <!-- If object_list is empty  -->
+        {% empty %}
+            <li>No objects yet.</li>
+        {% endfor %}
+    </ol>
+{% endblock content %}
+{% block custom_javascript %}
+
+    <!-- required for CSRF cookie parsing //-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sortable/0.9.13/jquery-sortable-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+    <script>
+        // get the Django CSRF Cookie
+        $(function () {
+            const csrftoken = Cookies.get('csrftoken');
+
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
+
+// Ensure jQuery AJAX calls set the CSRF header to prevent security errors
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+
+// Make our ordered list with a class of example sortable.
+// onDrop (reorder item) make a JSON representation of the list and POST the JSON to the current page
+            const group = $("ol.clips").sortable({
+                delay: 500,
+                onDrop: function ($item, container, _super) {
+                    const data = group.sortable("serialize").get();
+                    const jsonString = JSON.stringify(data, null, ' ');
+                    _super($item, container);
+                    $.ajax({
+                        type: "POST",
+                        data: jsonString,
+                        url: ""
+                    });
+                },
+            });
+
+            $(".play").click(function(e) {
+                let id = $(this).data("id");
+                $.ajax({
+                    type: "PUT",
+                    data: JSON.stringify(id, null, ' '),
+                    url: "{% url 'clip_list' %}" + id + "/"
+                })
+                e.stopPropagation();
+                e.preventDefault();
+            })
+
+        });
+    </script>
+
+{% endblock custom_javascript %}
