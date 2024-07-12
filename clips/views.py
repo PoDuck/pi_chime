@@ -9,9 +9,11 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views import View
+from django.views.generic import CreateView
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-
+from .forms import ClipUploadForm
+from django.urls import reverse_lazy
 
 class ClipsList(View):
     template_name = "clips/clip_list.html"
@@ -54,13 +56,16 @@ class ClipsList(View):
                 media_player.play()
                 sleep(3)
                 media_player.stop()
-                # media_player = vlc.MediaPlayer()
-                # media = vlc.Media("/home/poduck/PycharmProjects/chime/media/clips/waka_waka_clip.mp3")
-                # media_player.set_media(media)
-                # media_player.play()
 
             except KeyError:
                 HttpResponse(status="500", content="Malformed Data!")
             return JsonResponse({"success": True}, status=200)
         else:
             return JsonResponse({"success": False}, status=400)
+
+
+class ClipUploadView(CreateView):
+    model = Clip
+    form_class = ClipUploadForm
+    template_name = 'clips/upload.html'
+    success_url = reverse_lazy('index')
