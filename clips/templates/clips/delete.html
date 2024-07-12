@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-body">
+    <h5>Delete clip</h5>
+    <form method="post">
+        {% csrf_token %}
+        <p>Delete <strong>{{ object.game }} - {{ object.title }} </strong> from list? </p>
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a type="button" class="btn btn-success" href="{%url 'clip_list' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}

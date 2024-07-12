@@ -9,7 +9,7 @@ import json
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views import View
-from django.views.generic import CreateView
+from django.views.generic import CreateView, UpdateView, DeleteView
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from .forms import ClipUploadForm
@@ -69,3 +69,16 @@ class ClipUploadView(CreateView):
     form_class = ClipUploadForm
     template_name = 'clips/upload.html'
     success_url = reverse_lazy('index')
+
+
+class ClipUpdateView(UpdateView):
+    model = Clip
+    form_class = ClipUploadForm
+    template_name = 'clips/update.html'
+    success_url = reverse_lazy('clip_list')
+
+
+class ClipDeleteView(DeleteView):
+    model = Clip
+    template_name = 'clips/delete.html'
+    success_url = reverse_lazy('clip_list')

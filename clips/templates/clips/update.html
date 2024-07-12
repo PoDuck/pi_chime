@@ -5,13 +5,13 @@
 {% block content %}
     <div class="card">
         <div class="card-header bg-info">
-            Featured
+            Update
         </div>
         <div class="card-body">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form|crispy }}
-                <button type="submit">Upload Clip</button>
+                <button type="submit">Update Clip</button>
             </form>
         </div>
     </div>

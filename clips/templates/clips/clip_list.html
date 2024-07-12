@@ -1,6 +1,7 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}Clip List{% endblock title %}
 {% block custom_css %}
+    <link href="{% static 'clips/style.css' %}" rel="stylesheet"/>
     <style>
         body.dragging, body.dragging * {
             cursor: move !important;
@@ -31,6 +32,10 @@
             list-style-position: inside
         }
 
+        .btn-group {
+            transform: translate(10px, -20px);
+        }
+
     </style>
 {% endblock custom_css %}
 {% block content %}
@@ -42,14 +47,19 @@
                 <span class="pull-left">
                     <img src="{{ object.thumbnail_url }}" width="30" height="30" class="img-responsive img-rounded"
                          alt="icon"/>
-                    <a class="play" data-id="{{ object.id }}" href="{{ object.file_url }}">{{ object.game }} - {{ object.title }}</a>
+                    <a class="play" data-id="{{ object.id }}"
+                       href="{{ object.file_url }}">{{ object.game }} - {{ object.title }}</a>
                 </span>
-                <span class="ms-auto">
+                <div class="ms-auto">
                     <audio controls>
                         <source src="{{ object.file_url }}" type="audio/mp3">
                         Your browser does not support the audio element.
                     </audio>
-                </span>
+                    <div class="btn-group align-items-center" role="group" aria-label="Basic example">
+                        <a type="button" class="btn btn-primary" href="/clips/update/{{ object.id }}">Update</a>
+                        <a type="button" class="btn btn-danger" href="/clips/delete/{{ object.id }}">Delete</a>
+                    </div>
+                </div>
             </li>
             <!-- If object_list is empty  -->
         {% empty %}
@@ -98,7 +108,7 @@
                 },
             });
 
-            $(".play").click(function(e) {
+            $(".play").click(function (e) {
                 let id = $(this).data("id");
                 $.ajax({
                     type: "PUT",
