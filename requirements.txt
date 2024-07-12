@@ -1,6 +1,7 @@
 asgiref==3.8.1
 crispy-bootstrap5==2024.2
 Django==5.0.7
+django-cleanup==8.1.0
 django-crispy-forms==2.2
 pillow==10.4.0
 python-vlc==3.0.20123
