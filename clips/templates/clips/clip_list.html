@@ -69,10 +69,7 @@
 {% endblock content %}
 {% block custom_javascript %}
 
-    <!-- required for CSRF cookie parsing //-->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sortable/0.9.13/jquery-sortable-min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script>
         // get the Django CSRF Cookie
         $(function () {

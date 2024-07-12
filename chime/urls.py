@@ -19,9 +19,11 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.generic import TemplateView
+from clips.views import ClipsList
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='index.html'), name='index'),
+    path('', ClipsList.as_view(), name='index'),
+    # path('', TemplateView.as_view(template_name='index.html'), name='index'),
     path('clips/', include('clips.urls')),
     path('admin/', admin.site.urls),
 ]

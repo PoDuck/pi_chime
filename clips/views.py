@@ -82,3 +82,31 @@ class ClipDeleteView(DeleteView):
     model = Clip
     template_name = 'clips/delete.html'
     success_url = reverse_lazy('clip_list')
+
+
+class TriggerChime(View):
+    def get(self, request):
+        play_next = False
+        clips = Clip.objects.all().order_by('order')
+        last_played = Clip.objects.filter(last_played=True)
+        if list(clips)[-1].last_played or not last_played:
+            play_next = True
+            if list(clips)[-1].last_played:
+                list(clips)[-1].last_played = False
+                list(clips)[-1].save()
+        for clip in clips:
+            if clip.last_played:
+                play_next = True
+                clip.last_played = False
+                clip.save()
+            elif play_next:
+                media_player = vlc.MediaPlayer()
+                media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
+                media_player.set_media(media)
+                media_player.play()
+                sleep(3)
+                media_player.stop()
+                clip.last_played = True
+                clip.save()
+                break
+        return JsonResponse({"success": True}, status=200)
