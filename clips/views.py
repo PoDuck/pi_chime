@@ -93,7 +93,6 @@ class TriggerChime(View):
             play_next = True
             if list(clips)[-1].last_played:
                 list(clips)[-1].last_played = False
-                list(clips)[-1].save()
         for clip in clips:
             if clip.last_played:
                 play_next = True
@@ -104,9 +103,10 @@ class TriggerChime(View):
                 media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
                 media_player.set_media(media)
                 media_player.play()
-                sleep(3)
-                media_player.stop()
+                # sleep(3)
+                # media_player.stop()
                 clip.last_played = True
-                clip.save()
                 break
+        for clip in clips:
+            clip.save()
         return JsonResponse({"success": True}, status=200)
