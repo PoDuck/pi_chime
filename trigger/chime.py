@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import requests
+from time import sleep
 
 sensor_pin = 21
 
@@ -12,6 +13,7 @@ try:
     while True:
         if GPIO.input(sensor_pin) and play_clip:
             r = requests.get('http://localhost/clips/trigger/')
+            sleep(3)
         if not GPIO.input(sensor_pin):
             play_clip = True
 except KeyboardInterrupt:
