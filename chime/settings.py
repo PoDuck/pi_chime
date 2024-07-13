@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-4w$(+q&6n$9he&swa-u%pjd6sl$=sa3li!@33q3(q*%$ha^)u+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['chime.local', '10.0.1.225', 'localhost']
+ALLOWED_HOSTS = ['chime.local', 'localhost']
 
 
 # Application definition
