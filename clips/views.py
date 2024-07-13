@@ -54,8 +54,8 @@ class ClipsList(View):
                 media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
                 media_player.set_media(media)
                 media_player.play()
-                sleep(3)
-                media_player.stop()
+                # sleep(3)
+                # media_player.stop()
 
             except KeyError:
                 HttpResponse(status="500", content="Malformed Data!")
