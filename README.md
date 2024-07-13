@@ -151,4 +151,36 @@ We are almost done.  Apache and django are a bit finicky about file ownership an
 sudo chown www-data:www-data -R ~/chime
 ```
 
-At this point, you should be done
+At this point, you should be done with the django part of things.  We just need to add the chime.py file to systemd.
+
+## Setup Systemd Service
+
+We need to create a file `/lib/systemd/system/chime.service`.  This will be to start our triggering script at startup.  Put the following text in that file and save it.  Again, replace `pi` with whatever username you chose.
+
+```bash
+[Unit]
+Description=Chime Service
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/home/pi/.virtualenvs/chime/bin/python /home/pi/chime/trigger/chime.py < /home/pi/chime.log 2>&1
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Now set permissions on the file to 644.
+
+```bash
+sudo chmod 644 /lib/systemd/system/chime.service
+```
+
+Now we reload the daemon and enable the service.
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl start chime.service
+```
+
+At this point, we should be completely done.  Once you upload clips, you should be able to trigger the chime by pulling pin 21 low.  If that doesn't work, reboot the pi and try again.
