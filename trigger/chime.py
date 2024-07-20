@@ -15,7 +15,7 @@ play_clip = True
 try:
     while True:
         if GPIO.input(sensor_pin) and play_clip:
-            r = requests.get('http://localhost/clips/trigger/')
+            r = requests.get('http://chime.local/clips/trigger/')
             dev = pb.get_device('Samsung SM-N975U')
             push = dev.push_note("Alert!!", "Someone came in the door")
             sleep(3)
