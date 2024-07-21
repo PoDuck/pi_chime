@@ -52,6 +52,11 @@ class ClipsList(View):
                 clip = Clip.objects.get(pk=pk)
                 media_player = vlc.MediaPlayer()
                 media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
+                media_player.audio_set_volume(clip.max_volume)
+                if clip.end_time != clip.start_time:
+                    if clip.end_time > clip.start_time:
+                        media.add_option('start-time=' + str(clip.start_time))
+                        media.add_option('run-time=' + str(clip.end_time - clip.start_time))
                 media_player.set_media(media)
                 media_player.play()
                 # sleep(3)
@@ -102,6 +107,11 @@ class TriggerChime(View):
                 media_player = vlc.MediaPlayer()
                 media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
                 media_player.set_media(media)
+                media_player.set_volume(clip.volume)
+                if clip.end_time != clip.start_time:
+                    if clip.end_time > clip.start_time:
+                        media_player.add_option('start-time=' + str(clip.start_time))
+                        media_player.add_option('run-time=' + str(clip.end_time - clip.start_time))
                 media_player.play()
                 # sleep(3)
                 # media_player.stop()

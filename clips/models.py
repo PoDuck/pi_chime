@@ -8,6 +8,11 @@ class Clip(models.Model):
     file = models.FileField(upload_to='clips/')
     order = models.IntegerField(blank=False, default=100_000)
     last_played = models.BooleanField(default=False)
+    # Per clip settings.  Volume is in percentage and is multiplied with main settings volume percentage.
+    # Start and end times override main settings start and end times.
+    max_volume = models.IntegerField(blank=False, null=False, default=100)
+    start_time = models.FloatField(blank=False, null=False, default=0.0)
+    end_time = models.FloatField(blank=False, null=False, default=0.0)
 
     def __str__(self):
         return self.title
@@ -21,3 +26,9 @@ class Clip(models.Model):
     def file_url(self):
         if self.file and hasattr(self.file, 'url'):
             return self.file.url
+
+
+class Settings(models.Model):
+    volume = models.IntegerField(default=100)
+    start_time = models.FloatField(default=0.0)
+    end_time = models.FloatField(default=0.0)
