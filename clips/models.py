@@ -26,9 +26,3 @@ class Clip(models.Model):
     def file_url(self):
         if self.file and hasattr(self.file, 'url'):
             return self.file.url
-
-
-class Settings(models.Model):
-    volume = models.IntegerField(default=100)
-    start_time = models.FloatField(default=0.0)
-    end_time = models.FloatField(default=0.0)

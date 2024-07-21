@@ -1,9 +1,7 @@
-from django.views.generic import ListView
 from .models import Clip
 from django.conf import settings
 import os
 import vlc
-from time import sleep
 
 import json
 from django.shortcuts import render
@@ -14,6 +12,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from .forms import ClipUploadForm
 from django.urls import reverse_lazy
+
 
 class ClipsList(View):
     template_name = "clips/clip_list.html"
