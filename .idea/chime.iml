@@ -22,6 +22,8 @@
     <orderEntry type="library" name="js-cookie" level="application" />
     <orderEntry type="library" name="jquery-sortable" level="application" />
     <orderEntry type="library" name="jquery" level="application" />
+    <orderEntry type="library" name="sortablejs" level="application" />
+    <orderEntry type="library" name="jquery-sortablejs" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

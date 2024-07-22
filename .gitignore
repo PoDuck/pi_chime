@@ -321,3 +321,5 @@ cython_debug/
 media/
 static/
 !clips/static/
+.package.json
+package-lock.json

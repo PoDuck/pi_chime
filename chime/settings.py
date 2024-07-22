@@ -129,6 +129,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = str(BASE_DIR / 'static')
+# STATICFILES_DIRS = (
+#     os.path.join(BASE_DIR, 'static'),
+#     # This defines a prefix so the url paths will become `/static/node_modules/...`
+#     ('node_modules', os.path.join(BASE_DIR, 'node_modules/')),
+# )
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = str(BASE_DIR / 'media')

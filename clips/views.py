@@ -31,10 +31,10 @@ class ClipsList(View):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             try:
                 # Parse the JSON payload
-                data = json.loads(request.body)[0]
+                data = json.loads(request.body)
                 # Loop over our list order. The id equals the question id. Update the order and save
                 for idx, row in enumerate(data):
-                    pq = Clip.objects.get(pk=row['id'])
+                    pq = Clip.objects.get(pk=row)
                     pq.order = idx + 1
                     pq.save()
 

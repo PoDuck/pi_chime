@@ -36,10 +36,17 @@
             transform: translate(10px, -20px);
         }
 
+        .highlight {
+            border: 1px solid red;
+            font-weight: bold;
+            font-size: 45px;
+            background-color: #333333;
+         }
+
     </style>
 {% endblock custom_css %}
 {% block content %}
-    <ol class="clips list-group">
+    <ol id="clips" class="clips list-group">
         <!-- Iterate over object_list -->
         {% for object in object_list %}
             <!-- Display Objects -->
@@ -68,10 +75,12 @@
     </ol>
 {% endblock content %}
 {% block custom_javascript %}
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-sortable/0.9.13/jquery-sortable-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-sortablejs@latest/jquery-sortable.js"></script>
     <script>
         // get the Django CSRF Cookie
+        {#import Sortable from "sortablejs";#}
+
         $(function () {
             const csrftoken = Cookies.get('csrftoken');
 
@@ -92,18 +101,20 @@
 // Make our ordered list with a class of example sortable.
 // onDrop (reorder item) make a JSON representation of the list and POST the JSON to the current page
             const group = $("ol.clips").sortable({
-                delay: 500,
-                onDrop: function ($item, container, _super) {
-                    const data = group.sortable("serialize").get();
-                    const jsonString = JSON.stringify(data, null, ' ');
-                    _super($item, container);
-                    $.ajax({
-                        type: "POST",
-                        data: jsonString,
-                        url: ""
-                    });
-                },
-            });
+                animation: 350,
+                easing: "cubic-bezier(1, 0, 0, 1)",
+                store: {
+                    set: function (sortable) {
+                        let order = sortable.toArray()
+                        let data = JSON.stringify(order, null, ' ');
+                        $.ajax({
+                            type: "POST",
+                            data: data,
+                            url: ""
+                        });
+                    }
+                }
+             });
 
             $(".play").click(function (e) {
                 let id = $(this).data("id");
