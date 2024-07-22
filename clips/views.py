@@ -22,6 +22,7 @@ class ClipsList(View):
     def get(self, request):
         ctx = {
             'object_list': Clip.objects.all().order_by('order'),
+            'page': 'home',
         }
         return render(self.request, self.template_name, context=ctx)
 
@@ -74,6 +75,11 @@ class ClipUploadView(CreateView):
     template_name = 'clips/upload.html'
     success_url = reverse_lazy('index')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page'] = 'create'
+        return context
+
 
 class ClipUpdateView(UpdateView):
     model = Clip
@@ -81,6 +87,10 @@ class ClipUpdateView(UpdateView):
     template_name = 'clips/update.html'
     success_url = reverse_lazy('clip_list')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page'] = 'update'
+        return context
 
 class ClipDeleteView(DeleteView):
     model = Clip
