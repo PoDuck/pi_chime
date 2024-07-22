@@ -15,7 +15,7 @@ env = environ.Env(
 
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-pb = env('PUSHBULLET_KEY')
+pb = Pushbullet(env('PUSHBULLET_KEY'))
 
 sensor_pin = 21
 
@@ -27,7 +27,7 @@ play_clip = True
 try:
     while True:
         if GPIO.input(sensor_pin) and play_clip:
-            r = requests.get('http://' + env('LOCAL_DOMAIN') + env('LOCAL_PORT') + '/clips/trigger/')
+            r = requests.get('http://' + env('LOCAL_DOMAIN') + ':' + env('LOCAL_PORT', default='80') + '/clips/trigger/')
             dev = pb.get_device('Samsung SM-N975U')
             push = dev.push_note("Alert!!", "Someone came in the door")
             sleep(3)
