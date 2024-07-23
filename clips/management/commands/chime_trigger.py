@@ -18,7 +18,6 @@ space_pressed = False
 
 def on_press(key):
     try:
-        print('{0} pressed'.format(key))
         if key.char == 'q':
             global q_pressed
             q_pressed = True
@@ -29,7 +28,7 @@ def on_press(key):
 
 
 def on_release(key):
-    print('{0} released'.format(key))
+    pass
 
 
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
@@ -52,10 +51,8 @@ class Command(BaseCommand):
             while True:
                 if not on_pi:
                     if space_pressed:
-                        print('Space bar pressed')
                         break
                     if q_pressed:
-                        print('Q pressed')
                         q_pressed = False
                         play = True
                 else:
