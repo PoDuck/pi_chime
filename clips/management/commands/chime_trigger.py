@@ -42,7 +42,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         global q_pressed
         global space_pressed
-        pb = Pushbullet(settings.PUSHBULLET_API_KEY)
+        # pb = Pushbullet(settings.PUSHBULLET_API_KEY)
         play = False  # for detecting trigger
         if on_pi:
             sensor_pin = 21
@@ -83,8 +83,8 @@ class Command(BaseCommand):
                     for clip in clips:
                         clip.save()
                     # Send signal to pushbullet
-                    dev = pb.get_device('Samsung SM-N975U')
-                    dev.push_note("Alert!!", "Someone came in the door")
+                    # dev = pb.get_device('Samsung SM-N975U')
+                    # dev.push_note("Alert!!", "Someone came in the door")
                     # Wait at least 3 seconds before allowing chime to be tripped again.
                     sleep(3)
         except KeyboardInterrupt:
