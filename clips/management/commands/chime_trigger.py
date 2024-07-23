@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from time import sleep
-from pushbullet import Pushbullet
 from clips.models import Clip
 from clips.views import play_clip
+from django.conf import settings
+import requests
 try:
     import RPi.GPIO as GPIO
     on_pi = True
@@ -83,8 +83,11 @@ class Command(BaseCommand):
                     for clip in clips:
                         clip.save()
                     # Send signal to pushbullet
-                    # dev = pb.get_device('Samsung SM-N975U')
-                    # dev.push_note("Alert!!", "Someone came in the door")
+                    resp = requests.post(f"https://gotify.talova.com/message?token={settings.GOTIFY_API_KEY}", json={
+                        "message": "Front door entry.",
+                        "priority": 2,
+                        "title": "Alert!"
+                    })
                     # Wait at least 3 seconds before allowing chime to be tripped again.
                     sleep(3)
         except KeyboardInterrupt:
