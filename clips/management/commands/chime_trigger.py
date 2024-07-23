@@ -31,8 +31,9 @@ def on_release(key):
     pass
 
 
-listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-listener.start()
+if not on_pi:
+    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    listener.start()
 
 
 class Command(BaseCommand):
