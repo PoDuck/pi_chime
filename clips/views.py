@@ -63,17 +63,6 @@ class ClipsList(View):
                 data = json.loads(request.body)
                 clip = Clip.objects.get(pk=pk)
                 play_clip(clip)
-                # media_player = vlc.MediaPlayer()
-                # media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
-                # media_player.audio_set_volume(clip.max_volume)
-                # if clip.end_time != clip.start_time:
-                #     if clip.end_time > clip.start_time:
-                #         media.add_option('start-time=' + str(clip.start_time))
-                #         media.add_option('run-time=' + str(clip.end_time - clip.start_time))
-                # media_player.set_media(media)
-                # media_player.play()
-                # sleep(3)
-                # media_player.stop()
 
             except KeyError:
                 HttpResponse(status="500", content="Malformed Data!")
@@ -127,17 +116,6 @@ class TriggerChime(View):
                 clip.save()
             elif play_next:
                 play_clip(clip)
-                # media_player = vlc.MediaPlayer()
-                # media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
-                # media_player.set_media(media)
-                # media_player.audio_set_volume(clip.max_volume)
-                # if clip.end_time != clip.start_time:
-                #     if clip.end_time > clip.start_time:
-                #         media_player.add_option('start-time=' + str(clip.start_time))
-                #         media_player.add_option('run-time=' + str(clip.end_time - clip.start_time))
-                # media_player.play()
-                # sleep(3)
-                # media_player.stop()
                 clip.last_played = True
                 break
         for clip in clips:
