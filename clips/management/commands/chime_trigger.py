@@ -85,7 +85,7 @@ class Command(BaseCommand):
                     # Send signal to pushbullet
                     resp = requests.post(f"https://gotify.talova.com/message?token={settings.GOTIFY_API_KEY}", json={
                         "message": "Front door entry.",
-                        "priority": 2,
+                        "priority": 7,
                         "title": "Alert!"
                     })
                     # Wait at least 3 seconds before allowing chime to be tripped again.
