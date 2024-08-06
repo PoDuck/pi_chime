@@ -45,7 +45,7 @@ class Command(BaseCommand):
         # pb = Pushbullet(settings.PUSHBULLET_API_KEY)
         play = False  # for detecting trigger
         if on_pi:
-            sensor_pin = 26
+            sensor_pin = 21
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(sensor_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         try:
