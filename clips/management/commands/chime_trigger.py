@@ -4,6 +4,7 @@ from clips.models import Clip
 from clips.views import play_clip
 from django.conf import settings
 import requests
+from tracking.models import Track
 try:
     import RPi.GPIO as GPIO
     on_pi = True
@@ -56,9 +57,11 @@ class Command(BaseCommand):
                     if q_pressed:
                         q_pressed = False
                         play = True
+                        Track.objects.create()
                 else:
                     if GPIO.input(sensor_pin):  # Sensor is tripped
                         play = True
+                        Track.objects.create()
                 if play:
                     play = False  # reset play
                     play_next = False  # Play next clip in list default False

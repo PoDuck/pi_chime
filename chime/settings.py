@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'crispy_bootstrap5',
     'clips',
+    'tracking',
 ]
 
 MIDDLEWARE = [

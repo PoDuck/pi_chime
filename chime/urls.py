@@ -25,6 +25,7 @@ urlpatterns = [
     path('', ClipsList.as_view(), name='index'),
     # path('', TemplateView.as_view(template_name='index.html'), name='index'),
     path('clips/', include('clips.urls')),
+    path('tracking/', include('tracking.urls')),
     path('admin/', admin.site.urls),
 ]
 
