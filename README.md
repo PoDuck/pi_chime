@@ -68,6 +68,27 @@ mkvirtualenv chime
 
 You will now notice that your prompt has (chime) at the front of it, signifying that you are in a virtual environment.  All python commands we type will now be with that virtual python environment.
 
+We have some environment variables we need to set.  This can be done one several ways.  I will explain it from a .env file.
+
+This has no .env file stored in the repo, so you have to make it yourself.  It has several variables in it.  Edit these variables to fit your environment, and save in the root of the project.
+
+```bash
+DEBUG=on
+# Your SECRET_KEY value for django.  A random string is fine.
+SECRET_KEY="<YOUR SECRET KEY>"
+# Domain you will access this app from
+LOCAL_DOMAIN=<YOUR LOCAL DOMAIN>
+# Port you will point your browser to.  In production, this is usually 80.
+LOCAL_PORT=<PORT>
+# If you wish to use Gotify for notifications, enter your key.
+GOTIFY_KEY="<YOUR GOTIFY KEY>"
+# Are you using this on a raspberry pi?
+ON_PI=False
+# If you want to localize displayed data use this variable, 
+# otherwise it will be displayed in UTC. 
+LOCAL_TIMEZONE=<LOCAL TIMEZONE>
+```
+
 Now, we need to install the requirements stored in requirements.txt.
 
 ```bash

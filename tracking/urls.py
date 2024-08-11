@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('', views.TrackingView.as_view(), name='tracking'),
+    path('data/', views.TrackingDataView.as_view(), name='data'),
 ]

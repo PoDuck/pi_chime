@@ -24,6 +24,8 @@
     <orderEntry type="library" name="jquery" level="application" />
     <orderEntry type="library" name="sortablejs" level="application" />
     <orderEntry type="library" name="jquery-sortablejs" level="application" />
+    <orderEntry type="library" name="chart.js" level="application" />
+    <orderEntry type="library" name="jquery-3.4.1" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
