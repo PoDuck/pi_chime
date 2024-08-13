@@ -3,5 +3,9 @@ from .models import Track
 
 
 class TrackAdmin(admin.ModelAdmin):
-    readonly_fields = ('created_at')
-admin.site.register(Track)
+    fields = ('location', 'created', 'updated')
+    list_display = ('location', 'created', 'updated')
+    readonly_fields = ('created', 'updated')
+
+
+admin.site.register(Track, TrackAdmin)

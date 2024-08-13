@@ -42,13 +42,13 @@
             <input onchange="updateChart()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}"
                    max="{{ max_date|date:"Y-m-d" }}" value="{{ end_date }}">
             <select id="dow" onchange="updateChart()" name="dow">
-                <option value="0"{% if pk == 0 %} selected{% endif %}>Sunday</option>
-                <option value="1"{% if pk == 1 %} selected{% endif %}>Monday</option>
-                <option value="2"{% if pk == 2 %} selected{% endif %}>Tuesday</option>
-                <option value="3"{% if pk == 3 %} selected{% endif %}>Wednesday</option>
-                <option value="4"{% if pk == 4 %} selected{% endif %}>Thursday</option>
-                <option value="5"{% if pk == 5 %} selected{% endif %}>Friday</option>
-                <option value="6"{% if pk == 6 %} selected{% endif %}>Saturday</option>
+                <option value="0"{% if pk == 0 %} selected{% endif %}>Monday</option>
+                <option value="1"{% if pk == 1 %} selected{% endif %}>Tuesday</option>
+                <option value="2"{% if pk == 2 %} selected{% endif %}>Wednesday</option>
+                <option value="3"{% if pk == 3 %} selected{% endif %}>Thursday</option>
+                <option value="4"{% if pk == 4 %} selected{% endif %}>Friday</option>
+                <option value="5"{% if pk == 5 %} selected{% endif %}>Saturday</option>
+                <option value="6"{% if pk == 6 %} selected{% endif %}>Sunday</option>
             </select>
             <input type="checkbox" id="all_days" onchange="updateChart()">
             <label for="all_days">All days</label>
