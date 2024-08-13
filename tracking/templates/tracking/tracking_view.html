@@ -44,10 +44,13 @@
         </div>
         <div class="card-body" id="instructions_body">
             <h5 class="card-title">How to use</h5>
-            <p class="card-text">By default, this graph shows the average percentage of daily traffic from the first entry.  If you want to see the data for a specific set of dates, select the range of dates from the dropdown menus.</p>
-            <p class="card-text">If you want to see hourly traffic, click on a bar do get the hourly traffic for that day of the week, or click the button below for all time traffic by hour.</p>
-            <a href="{% url 'all_days_hourly' %}" class="btn btn-primary">Hourly Data</a>
+            <p class="card-text">By default, this graph shows the average percentage of daily traffic from the first
+                entry. If you want to see the data for a specific set of dates, select the range of dates from the
+                dropdown menus.</p>
+            <p class="card-text">If you want to see hourly traffic, click on a bar do get the hourly traffic for that
+                day of the week, or click the button below for all time traffic by hour.</p>
         </div>
+        <a href="{% url 'all_days_hourly' %}" class="btn btn-primary" style="width: 150px;">Hourly Data</a>
     </div>
     <div class="chartCard">
         <div class="chartBox">
