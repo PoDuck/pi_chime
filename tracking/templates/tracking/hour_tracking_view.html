@@ -4,100 +4,121 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        font-family: sans-serif;
-      }
-      .chartCard {
-        width: 100vw;
-        height: calc(100vh - 40px);
-        background: rgba(61, 118, 153, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .chartBox {
-        width: 700px;
-        padding: 20px;
-        border-radius: 20px;
-        border: solid 3px rgba(54, 162, 235, 1);
-        background: white;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
 
-      select {
-          padding: 4px;
-      }
+        .chartCard {
+            width: 100vw;
+            height: calc(100vh - 40px);
+            background: rgba(61, 118, 153, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chartBox {
+            width: 700px;
+            padding: 20px;
+            border-radius: 20px;
+            border: solid 3px rgba(54, 162, 235, 1);
+            background: white;
+        }
+
+        select {
+            padding: 4px;
+        }
     </style>
 {% endblock custom_css %}
 {% block content %}
     <div class="chartCard">
-      <div class="chartBox">
-        <canvas id="tracking-chart" data-url="{% url 'hour_data' pk start_date end_date %}"></canvas>
-          {#No filters on dates, because they are using the text from the URL#}
-          <input onchange="filterDate()" type="date" id="start_date" min="{{ min_date|date:"Y-m-d" }}" max="{{ max_date|date:"Y-m-d" }}" value="{{ start_date }}">
-          <input onchange="filterDate()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}" max="{{ max_date|date:"Y-m-d" }}" value="{{ end_date }}">
-          <select id="dow" onchange="filterDate()" name="dow">
-              <option value="0"{% if pk == 0 %} selected{% endif %}>Sunday</option>
-              <option value="1"{% if pk == 1 %} selected{% endif %}>Monday</option>
-              <option value="2"{% if pk == 2 %} selected{% endif %}>Tuesday</option>
-              <option value="3"{% if pk == 3 %} selected{% endif %}>Wednesday</option>
-              <option value="4"{% if pk == 4 %} selected{% endif %}>Thursday</option>
-              <option value="5"{% if pk == 5 %} selected{% endif %}>Friday</option>
-              <option value="6"{% if pk == 6 %} selected{% endif %}>Saturday</option>
-          </select>
-      </div>
+        <div class="chartBox">
+            <canvas id="tracking-chart"></canvas>
+            {#No filters on dates, because they are using the text from the URL#}
+            <input onchange="updateChart()" type="date" id="start_date" min="{{ min_date|date:"Y-m-d" }}"
+                   max="{{ max_date|date:"Y-m-d" }}" value="{{ start_date }}">
+            <input onchange="updateChart()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}"
+                   max="{{ max_date|date:"Y-m-d" }}" value="{{ end_date }}">
+            <select id="dow" onchange="updateChart()" name="dow">
+                <option value="0"{% if pk == 0 %} selected{% endif %}>Sunday</option>
+                <option value="1"{% if pk == 1 %} selected{% endif %}>Monday</option>
+                <option value="2"{% if pk == 2 %} selected{% endif %}>Tuesday</option>
+                <option value="3"{% if pk == 3 %} selected{% endif %}>Wednesday</option>
+                <option value="4"{% if pk == 4 %} selected{% endif %}>Thursday</option>
+                <option value="5"{% if pk == 5 %} selected{% endif %}>Friday</option>
+                <option value="6"{% if pk == 6 %} selected{% endif %}>Saturday</option>
+            </select>
+            <input type="checkbox" id="all_days" onchange="updateChart()">
+            <label for="all_days">All days</label>
+        </div>
     </div>
 {% endblock content %}
 {% block custom_javascript %}
     <script>
-        function clickHandler() {
-            console.log('click');
+        function updateChart() {
+            if (document.getElementById('all_days').checked) {
+                document.getElementById('dow').setAttribute("disabled", "disabled");
+            } else {
+                document.getElementById('dow').removeAttribute("disabled");
+            }
+            async function fetchJSON() {
+                const url = {% url 'day_tracking' %} +'data/' + document.getElementById('dow').value + '/' + document.getElementById('start_date').value + '/' + document.getElementById('end_date').value + '/' + document.getElementById('all_days').checked;
+                const response = await fetch(url);
+                const datapoints = await response.json();
+                return datapoints;
+            }
+
+            fetchJSON().then(datapoints => {
+                const days = datapoints.data;
+                const labels = datapoints.labels;
+                chart.config.data.datasets[0].data = days;
+                chart.config.data.labels = labels;
+                chart.update();
+            })
         }
 
-        $(function () {
-            const $trackingChart = $("#tracking-chart");
-            $.ajax({
-                url: $trackingChart.data("url"),
-                success: function (data) {
+        updateChart();
 
-                    let ctx = $trackingChart[0].getContext("2d");
+        const data = {
+            datasets: [{
+                label: 'Percentage',
+                backgroundColor: 'blue',
+            }]
+        };
 
-                    const chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: 'Percentage',
-                                backgroundColor: 'blue',
-                                data: data.data
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'People Tracking Bar Chart'
-                            }
-                        }
-                    });
-
-                    function clickHandler(click) {
-                        const points = chart.getElementsAtEventForMode(click, 'nearest', { intersect: true }, true);
-                        if (points.length) {
-                            const firstPoint = points[0];
-                            console.log(firstPoint);
-                            window.open('{% url 'day_tracking' %}')
-                        }
-                    }
-
-                    chart.canvas.onclick = clickHandler;
+        const config = {
+            type: 'bar',
+            data,
+            options: {
+                responsive: true,
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'People Tracking Bar Chart'
                 }
-            });
-        });
+            }
+        };
 
+        const chart = new Chart(
+            document.getElementById('tracking-chart'),
+            config
+        );
+
+        function clickHandler(click) {
+            const points = chart.getElementsAtEventForMode(click, 'nearest', {intersect: true}, true);
+            if (points.length) {
+                const firstPoint = points[0];
+                const key = firstPoint.index
+                const start_date = $('#start_date').val()
+                const end_date = $('#end_date').val()
+                window.open('{% url 'day_tracking' %}' + key + '/' + start_date + '/' + end_date + '/', "_self")
+            }
+        }
+
+        chart.canvas.onclick = clickHandler;
     </script>
 {% endblock custom_javascript %}

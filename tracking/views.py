@@ -41,12 +41,14 @@ class HourTrackingView(TemplateView):
 
 class HourTrackingDataView(View):
     @method_decorator(ensure_csrf_cookie)
-    def get(self, request, pk, start_date, end_date):
-        data = Track.objects.all()
+    def get(self, request, pk, start_date, end_date, all_days):
+        start = parse_datetime(start_date)
+        end = parse_datetime(end_date)
+        data = Track.objects.all().filter(created__date__range=(start.date(), end.date()))
         hours_of_day = []
         for track in data:
             created_at_tz = track.created.astimezone(tz)
-            if created_at_tz.weekday() == int(pk):
+            if created_at_tz.weekday() == int(pk) or all_days == 'true':
                 hour_of_day = created_at_tz.hour
                 hours_of_day.append(hour_of_day)
         hour_counts = Counter(hours_of_day)
