@@ -14,6 +14,14 @@ from datetime import datetime
 tz = pytz.timezone(settings.LOCAL_TIMEZONE)
 
 
+def get_start_end_dates(start_date, end_date):
+    start = parse_datetime(start_date)
+    tz_start = datetime(start.year, start.month, start.day, tzinfo=tz)
+    end = parse_datetime(end_date)
+    tz_end = datetime(end.year, end.month, end.day, 23, 59, 59, 99, tzinfo=tz)
+    return tz_start, tz_end
+
+
 class DayTrackingView(TemplateView):
     template_name = "tracking/tracking_view.html"
 
@@ -50,11 +58,8 @@ class HourTrackingViewAllDays(HourTrackingView):
 class HourTrackingDataView(View):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, pk, start_date, end_date, all_days):
-        start = parse_datetime(start_date)
-        tz_start = datetime(start.year, start.month, start.day, tzinfo=tz)
-        end = parse_datetime(end_date)
-        tz_end = datetime(end.year, end.month, end.day + 1, tzinfo=tz)
-        data = Track.objects.all().filter(created__date__range=(tz_start, tz_end))
+        tz_start, tz_end = get_start_end_dates(start_date, end_date)
+        data = Track.objects.all().filter(created__range=(tz_start, tz_end))
         hours_of_day = []
         for track in data:
             created_at_tz = track.created.astimezone(tz)
@@ -79,10 +84,7 @@ class HourTrackingDataView(View):
 class DayTrackingDataView(View):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, start_date, end_date):
-        start = parse_datetime(start_date)
-        tz_start = datetime(start.year, start.month, start.day, tzinfo=tz)
-        end = parse_datetime(end_date)
-        tz_end = datetime(end.year, end.month, end.day + 1, tzinfo=tz)
+        tz_start, tz_end = get_start_end_dates(start_date, end_date)
         data = Track.objects.all().filter(created__date__range=(tz_start, tz_end))
         day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         days_of_week = []

@@ -65,6 +65,8 @@
 {% block custom_javascript %}
     <script>
         function updateChart() {
+            document.getElementById('start_date').setAttribute('max', document.getElementById('end_date').value);
+            document.getElementById('end_date').setAttribute('min', document.getElementById('start_date').value);
             async function fetchJSON() {
                 const url = {% url 'day_tracking' %} +'data/' + document.getElementById('start_date').value + '/' + document.getElementById('end_date').value + '/';
                 const response = await fetch(url);
