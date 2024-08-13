@@ -25,6 +25,7 @@
             border-radius: 20px;
             border: solid 3px rgba(54, 162, 235, 1);
             background: white;
+            margin-bottom: calc(100vh / 3)
         }
 
         select {
@@ -33,14 +34,26 @@
     </style>
 {% endblock custom_css %}
 {% block content %}
+    <div class="card">
+        <div class="card-header">
+            Instructions
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">How to use</h5>
+            <p class="card-text">This graph shows the average percentage of traffic by hour.  If you want to see the data for a specific set of dates, select the range of dates from the dropdown menus.</p>
+            <p class="card-text">If you want to see the traffic only for specific days of the week, deselect "All days" and select the day you want to see traffic for.</p>
+            <p class="card-text">To see traffic average for days of the week, click the button below.</p>
+            <a href="{% url 'day_tracking' %}" class="btn btn-primary">Daily Data</a>
+        </div>
+    </div>
     <div class="chartCard">
         <div class="chartBox">
             <canvas id="tracking-chart"></canvas>
             {#No filters on dates, because they are using the text from the URL#}
             <input onchange="updateChart()" type="date" id="start_date" min="{{ min_date|date:"Y-m-d" }}"
-                   max="{{ max_date|date:"Y-m-d" }}" value="{{ start_date }}">
+                   max="{{ max_date|date:"Y-m-d" }}" value="{% if start_date %}{{ start_date }}{% else %}{{ min_date|date:"Y-m-d" }}{% endif %}">
             <input onchange="updateChart()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}"
-                   max="{{ max_date|date:"Y-m-d" }}" value="{{ end_date }}">
+                   max="{{ max_date|date:"Y-m-d" }}" value="{% if end_date %}{{ end_date }}{% else %}{{ max_date|date:"Y-m-d" }}{% endif %}">
             <select id="dow" onchange="updateChart()" name="dow">
                 <option value="0"{% if pk == 0 %} selected{% endif %}>Monday</option>
                 <option value="1"{% if pk == 1 %} selected{% endif %}>Tuesday</option>
@@ -50,7 +63,7 @@
                 <option value="5"{% if pk == 5 %} selected{% endif %}>Saturday</option>
                 <option value="6"{% if pk == 6 %} selected{% endif %}>Sunday</option>
             </select>
-            <input type="checkbox" id="all_days" onchange="updateChart()">
+            <input type="checkbox" id="all_days" onchange="updateChart()"{% if all_days %} checked{% endif %}>
             <label for="all_days">All days</label>
         </div>
     </div>

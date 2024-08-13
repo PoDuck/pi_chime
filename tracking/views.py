@@ -39,6 +39,13 @@ class HourTrackingView(TemplateView):
         return context
 
 
+class HourTrackingViewAllDays(HourTrackingView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['all_days'] = True
+        return context
+
+
 class HourTrackingDataView(View):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, pk, start_date, end_date, all_days):
