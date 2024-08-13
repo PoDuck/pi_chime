@@ -27,14 +27,22 @@
             background: white;
             margin-bottom: calc(100vh / 3)
         }
+
+        #instructions_body {
+            display: none;
+        }
+
+        #arrow {
+            color: #AAA;
+        }
     </style>
 {% endblock custom_css %}
 {% block content %}
     <div class="card">
-        <div class="card-header">
-            Instructions
+        <div class="card-header" id="instructions">
+            Instructions <span id="arrow">&#x25B8;</span>
         </div>
-        <div class="card-body">
+        <div class="card-body" id="instructions_body">
             <h5 class="card-title">How to use</h5>
             <p class="card-text">By default, this graph shows the average percentage of daily traffic from the first entry.  If you want to see the data for a specific set of dates, select the range of dates from the dropdown menus.</p>
             <p class="card-text">If you want to see hourly traffic, click on a bar do get the hourly traffic for that day of the week, or click the button below for all time traffic by hour.</p>
@@ -111,6 +119,23 @@
                 window.open('{% url 'day_tracking' %}' + key + '/' + start_date + '/' + end_date + '/', "_self")
             }
         }
+
+        const rightArrow = '&#x25B8;';
+        const upArrow = '&#x25BE;';
+
+        $(document).ready(function () {
+            $("#instructions").click(function () {
+                $("#instructions_body").slideToggle(300, function () {
+                    if ($("#instructions_body").is(':visible')) {
+                        $("#arrow").html(upArrow);
+                        console.log("visible");
+                    } else {
+                        $("#arrow").html(rightArrow);
+                        console.log("not visible");
+                    }
+                });
+            });
+        });
 
         chart.canvas.onclick = clickHandler;
     </script>
