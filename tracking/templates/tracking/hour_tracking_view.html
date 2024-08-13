@@ -1,0 +1,103 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Tracking{% endblock title %}
+{% block custom_css %}
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      .chartCard {
+        width: 100vw;
+        height: calc(100vh - 40px);
+        background: rgba(61, 118, 153, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chartBox {
+        width: 700px;
+        padding: 20px;
+        border-radius: 20px;
+        border: solid 3px rgba(54, 162, 235, 1);
+        background: white;
+      }
+
+      select {
+          padding: 4px;
+      }
+    </style>
+{% endblock custom_css %}
+{% block content %}
+    <div class="chartCard">
+      <div class="chartBox">
+        <canvas id="tracking-chart" data-url="{% url 'hour_data' pk start_date end_date %}"></canvas>
+          {#No filters on dates, because they are using the text from the URL#}
+          <input onchange="filterDate()" type="date" id="start_date" min="{{ min_date|date:"Y-m-d" }}" max="{{ max_date|date:"Y-m-d" }}" value="{{ start_date }}">
+          <input onchange="filterDate()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}" max="{{ max_date|date:"Y-m-d" }}" value="{{ end_date }}">
+          <select id="dow" onchange="filterDate()" name="dow">
+              <option value="0"{% if pk == 0 %} selected{% endif %}>Sunday</option>
+              <option value="1"{% if pk == 1 %} selected{% endif %}>Monday</option>
+              <option value="2"{% if pk == 2 %} selected{% endif %}>Tuesday</option>
+              <option value="3"{% if pk == 3 %} selected{% endif %}>Wednesday</option>
+              <option value="4"{% if pk == 4 %} selected{% endif %}>Thursday</option>
+              <option value="5"{% if pk == 5 %} selected{% endif %}>Friday</option>
+              <option value="6"{% if pk == 6 %} selected{% endif %}>Saturday</option>
+          </select>
+      </div>
+    </div>
+{% endblock content %}
+{% block custom_javascript %}
+    <script>
+        function clickHandler() {
+            console.log('click');
+        }
+
+        $(function () {
+            const $trackingChart = $("#tracking-chart");
+            $.ajax({
+                url: $trackingChart.data("url"),
+                success: function (data) {
+
+                    let ctx = $trackingChart[0].getContext("2d");
+
+                    const chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Percentage',
+                                backgroundColor: 'blue',
+                                data: data.data
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'People Tracking Bar Chart'
+                            }
+                        }
+                    });
+
+                    function clickHandler(click) {
+                        const points = chart.getElementsAtEventForMode(click, 'nearest', { intersect: true }, true);
+                        if (points.length) {
+                            const firstPoint = points[0];
+                            console.log(firstPoint);
+                            window.open('{% url 'day_tracking' %}')
+                        }
+                    }
+
+                    chart.canvas.onclick = clickHandler;
+                }
+            });
+        });
+
+    </script>
+{% endblock custom_javascript %}

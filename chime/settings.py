@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'clips',
     'tracking',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'chime.urls'
@@ -147,3 +149,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 GOTIFY_API_KEY = env('GOTIFY_KEY')
 LOCAL_TIMEZONE = env('LOCAL_TIMEZONE', default=TIME_ZONE)
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
