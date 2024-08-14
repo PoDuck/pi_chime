@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="JavaScriptLibraryMappings">
-    <file url="file://$PROJECT_DIR$" libraries="{chart.js, jquery, jquery-3.4.1, jquery-sortable, jquery-sortablejs, js-cookie, sortablejs}" />
+    <file url="file://$PROJECT_DIR$" libraries="{chart-utils, chart.js, jquery, jquery-3.4.1, jquery-sortable, jquery-sortablejs, js-cookie, sortablejs, utils}" />
   </component>
 </project>

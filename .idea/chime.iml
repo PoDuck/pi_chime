@@ -26,6 +26,8 @@
     <orderEntry type="library" name="jquery-sortablejs" level="application" />
     <orderEntry type="library" name="chart.js" level="application" />
     <orderEntry type="library" name="jquery-3.4.1" level="application" />
+    <orderEntry type="library" name="chart-utils" level="application" />
+    <orderEntry type="library" name="utils" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
