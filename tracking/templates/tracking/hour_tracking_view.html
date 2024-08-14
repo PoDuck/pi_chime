@@ -116,9 +116,11 @@
             }
 
             fetchJSON().then(datapoints => {
-                const days = datapoints.data;
+                const percentages = datapoints.data;
+                const counts = datapoints.data2;
                 const labels = datapoints.labels;
-                chart.config.data.datasets[0].data = days;
+                chart.config.data.datasets[0].data = percentages;
+                chart.config.data.datasets[1].data = counts;
                 chart.config.data.labels = labels;
                 chart.update();
             })
@@ -127,13 +129,22 @@
         updateChart();
 
         const data = {
-            datasets: [{
-                label: 'Percentage',
-                backgroundColor: '#85c1e9',
-                borderColor: 'blue',
-                borderWidth: 2,
-                borderRadius: 3
-            }]
+            datasets: [
+                {
+                    label: 'Percentage',
+                    backgroundColor: '#85c1e9',
+                    borderColor: 'blue',
+                    borderWidth: 2,
+                    borderRadius: 3
+                },
+                {
+                    label: 'Count',
+                    backgroundColor: '#fff9c4',
+                    borderColor: 'gold',
+                    borderWidth: 2,
+                    borderRadius: 3,
+                }
+            ]
         };
 
         const config = {

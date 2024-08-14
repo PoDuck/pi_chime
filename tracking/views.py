@@ -68,7 +68,9 @@ class HourTrackingDataView(View):
                 hours_of_day.append(hour_of_day)
         hour_counts = Counter(hours_of_day)
         percentages = [0 for _ in range(24)]
+        counts = [0 for _ in range(24)]
         for hour, count in sorted(hour_counts.items()):
+            counts[hour] = count
             percentages[hour] = round(count / len(hours_of_day), 2) * 100
         hour_names = []
         for i in range(24):
@@ -76,6 +78,7 @@ class HourTrackingDataView(View):
         ctx = {
             'labels': hour_names,
             'data': percentages,
+            'data2': counts,
         }
 
         return JsonResponse(ctx)
@@ -95,12 +98,14 @@ class DayTrackingDataView(View):
             days_of_week.append(day_of_week)
         day_counts = Counter(days_of_week)
         percentages = [0 for _ in range(7)]
+        counts = [0 for _ in range(7)]
         for day_number, count in sorted(day_counts.items()):
+            counts[day_number] = count
             percentages[day_number] = round(count / len(days_of_week), 2) * 100
-
         ctx = {
             'labels': day_names,
             'data': percentages,
+            'data2': counts,
         }
 
         return JsonResponse(ctx)
