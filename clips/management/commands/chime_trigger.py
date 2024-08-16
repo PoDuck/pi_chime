@@ -4,6 +4,7 @@ from clips.models import Clip
 from clips.views import play_clip
 from django.conf import settings
 import requests
+from requests.exceptions import SSLError
 from tracking.models import Track
 try:
     import RPi.GPIO as GPIO
@@ -86,11 +87,14 @@ class Command(BaseCommand):
                     for clip in clips:
                         clip.save()
                     # Send signal to pushbullet
-                    requests.post(f"https://gotify.talova.com/message?token={settings.GOTIFY_API_KEY}", json={
-                        "message": "Front door entry.",
-                        "priority": 7,
-                        "title": "Alert!"
-                    })
+                    try:
+                        requests.post(f"https://gotify.talova.com/message?token={settings.GOTIFY_API_KEY}", json={
+                            "message": "Front door entry.",
+                            "priority": 7,
+                            "title": "Alert!"
+                        })
+                    except SSLError:
+                        print('Gotify not responding')
                     # Wait at least 3 seconds before allowing chime to be tripped again.
                     sleep(3)
         except KeyboardInterrupt:
