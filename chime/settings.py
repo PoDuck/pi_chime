@@ -147,6 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+GOTIFY_URL = env('GOTIFY_URL').rstrip('/')
 GOTIFY_API_KEY = env('GOTIFY_KEY')
 LOCAL_TIMEZONE = env('LOCAL_TIMEZONE', default=TIME_ZONE)
 

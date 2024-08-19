@@ -88,7 +88,7 @@ class Command(BaseCommand):
                         clip.save()
                     # Send signal to pushbullet
                     try:
-                        requests.post(f"https://gotify.talova.com/message?token={settings.GOTIFY_API_KEY}", json={
+                        requests.post(f"{settings.GOTIFY_URL}/message?token={settings.GOTIFY_API_KEY}", json={
                             "message": "Front door entry.",
                             "priority": 7,
                             "title": "Alert!"
