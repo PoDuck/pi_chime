@@ -1,133 +1,216 @@
-{% extends 'base.html' %}{% load static %}
-{% block title %}Clip List{% endblock title %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clip Library - Chime{% endblock title %}
+
 {% block custom_css %}
-    <link href="{% static 'clips/style.css' %}" rel="stylesheet"/>
-    <style>
-        body.dragging, body.dragging * {
-            cursor: move !important;
+<style>
+    .clip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-xl);
+        padding-bottom: var(--space-lg);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .clip-header h1 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .clip-header h1 svg {
+        color: var(--primary-light);
+    }
+
+    .clip-count {
+        background: var(--bg-elevated);
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-full);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .clip-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: var(--space-lg);
+        align-items: center;
+        padding: var(--space-lg) var(--space-xl);
+    }
+
+    .clip-thumbnail {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        box-shadow: var(--shadow-sm);
+        background: var(--bg-elevated);
+    }
+
+    .clip-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        min-width: 0;
+    }
+
+    .clip-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .clip-game {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .clip-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+
+    .clip-audio {
+        width: 200px;
+    }
+
+    .clip-actions {
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-2xl);
+        color: var(--text-secondary);
+    }
+
+    .empty-state svg {
+        margin-bottom: var(--space-lg);
+        color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+        margin-bottom: var(--space-sm);
+    }
+
+    @media (max-width: 768px) {
+        .clip-item {
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
         }
 
-        .dragged {
-            position: absolute;
-            opacity: 0.5;
-            z-index: 2000;
+        .clip-controls {
+            flex-direction: column;
+            align-items: stretch;
         }
 
-        ol.clips li:hover {
-            cursor: move !important;
+        .clip-audio {
+            width: 100%;
         }
 
-        ol.clips li.placeholder {
-            position: relative;
-            /** More li styles **/
+        .clip-actions {
+            justify-content: flex-end;
         }
-
-        ol.clips li.placeholder:before {
-            position: absolute;
-            /** Define arrowhead **/
-        }
-
-        .list-group-item {
-            display: list-item;
-            list-style-position: inside
-        }
-
-        .btn-group {
-            transform: translate(10px, -20px);
-        }
-
-        .highlight {
-            border: 1px solid red;
-            font-weight: bold;
-            font-size: 45px;
-            background-color: #333333;
-         }
-
-    </style>
+    }
+</style>
 {% endblock custom_css %}
+
 {% block content %}
-    <ol id="clips" class="clips list-group">
-        <!-- Iterate over object_list -->
+<div class="fade-in">
+    <div class="clip-header">
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            Clip Library
+        </h1>
+        <div style="display: flex; align-items: center; gap: var(--space-md);">
+            <span class="clip-count">{{ object_list|length }} clips</span>
+            <a href="{% url 'add_clip' %}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                Add Clip
+            </a>
+        </div>
+    </div>
+
+    <ul id="clips" class="clips list-group">
         {% for object in object_list %}
-            <!-- Display Objects -->
-            <li data-id="{{ object.id }}" class="list-group-item d-flex align-items-center">
-                <span class="pull-left">
-                    <img src="{{ object.thumbnail_url }}" width="30" height="30" class="img-responsive img-rounded"
-                         alt="icon"/>
-                    <a class="play" data-id="{{ object.id }}"
-                       href="{{ object.file_url }}">{{ object.game }} - {{ object.title }}</a>
-                </span>
-                <div class="ms-auto">
-                    <audio controls>
-                        <source src="{{ object.file_url }}" type="audio/mp3">
-                        Your browser does not support the audio element.
-                    </audio>
-                    <div class="btn-group align-items-center" role="group" aria-label="Basic example">
-                        <a type="button" class="btn btn-primary" href="/clips/update/{{ object.id }}">Update</a>
-                        <a type="button" class="btn btn-danger" href="/clips/delete/{{ object.id }}">Delete</a>
+        <li data-id="{{ object.id }}" class="list-group-item">
+            <div class="clip-item">
+                <div style="display: flex; align-items: center; gap: var(--space-md);">
+                    <img src="{{ object.thumbnail_url }}" class="clip-thumbnail" alt="{{ object.title }}">
+                    <div class="clip-info">
+                        <a class="clip-title play" data-id="{{ object.id }}" href="{{ object.file_url }}">{{ object.title }}</a>
+                        <span class="clip-game">{{ object.game }}</span>
                     </div>
                 </div>
-            </li>
-            <!-- If object_list is empty  -->
+
+                <div class="clip-controls">
+                    <audio class="clip-audio" controls>
+                        <source src="{{ object.file_url }}" type="audio/mp3">
+                    </audio>
+                    <div class="clip-actions">
+                        <a class="btn btn-secondary btn-icon" href="/clips/update/{{ object.id }}" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </a>
+                        <a class="btn btn-danger btn-icon" href="/clips/delete/{{ object.id }}" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </li>
         {% empty %}
-            <li>No objects yet.</li>
+        <li class="list-group-item empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            <h3>No clips yet</h3>
+            <p>Get started by uploading your first audio clip.</p>
+            <a href="{% url 'add_clip' %}" class="btn btn-primary" style="margin-top: var(--space-md);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Upload Clip
+            </a>
+        </li>
         {% endfor %}
-    </ol>
+    </ul>
+</div>
 {% endblock content %}
+
 {% block custom_javascript %}
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-sortablejs@latest/jquery-sortable.js"></script>
-    <script>
-        // get the Django CSRF Cookie
-        {#import Sortable from "sortablejs";#}
-
-        $(function () {
-            const csrftoken = Cookies.get('csrftoken');
-
-            function csrfSafeMethod(method) {
-                // these HTTP methods do not require CSRF protection
-                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+<script>
+$(function() {
+    const csrftoken = Cookies.get('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
+        }
+    });
 
-// Ensure jQuery AJAX calls set the CSRF header to prevent security errors
-            $.ajaxSetup({
-                beforeSend: function (xhr, settings) {
-                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                    }
-                }
-            });
-
-// Make our ordered list with a class of example sortable.
-// onDrop (reorder item) make a JSON representation of the list and POST the JSON to the current page
-            const group = $("ol.clips").sortable({
-                animation: 350,
-                easing: "cubic-bezier(1, 0, 0, 1)",
-                store: {
-                    set: function (sortable) {
-                        let order = sortable.toArray()
-                        let data = JSON.stringify(order, null, ' ');
-                        $.ajax({
-                            type: "POST",
-                            data: data,
-                            url: ""
-                        });
-                    }
-                }
-             });
-
-            $(".play").click(function (e) {
-                let id = $(this).data("id");
-                $.ajax({
-                    type: "PUT",
-                    data: JSON.stringify(id, null, ' '),
-                    url: "{% url 'clip_list' %}" + id + "/"
-                })
-                e.stopPropagation();
-                e.preventDefault();
-            })
-
+    $(".play").click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $.ajax({
+            type: "PUT",
+            data: JSON.stringify($(this).data("id")),
+            url: "{% url 'clip_list' %}" + $(this).data("id") + "/"
         });
-    </script>
-
+    });
+});
+</script>
 {% endblock custom_javascript %}

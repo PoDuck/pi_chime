@@ -1,7 +1,8 @@
 from .models import Clip
 from django.conf import settings
 import os
-import vlc
+import subprocess
+import threading
 
 import json
 from django.shortcuts import render
@@ -15,15 +16,18 @@ from django.urls import reverse_lazy
 
 
 def play_clip(clip):
-    media_player = vlc.MediaPlayer()
-    media = vlc.Media(os.path.join(settings.MEDIA_ROOT, str(clip.file)))
-    media_player.audio_set_volume(clip.max_volume)
-    if clip.end_time != clip.start_time:
-        if clip.end_time > clip.start_time:
-            media.add_option('start-time=' + str(clip.start_time))
-            media.add_option('run-time=' + str(clip.end_time - clip.start_time))
-    media_player.set_media(media)
-    media_player.play()
+    """Play audio clip using mpg123 via sudo in background thread."""
+    file_path = os.path.join(settings.MEDIA_ROOT, str(clip.file))
+    
+    def _play():
+        try:
+            subprocess.run(['sudo', 'mpg123', '-q', '-a', 'hw:0,0', file_path], timeout=60)
+        except Exception as e:
+            print(f'Error playing clip: {e}')
+    
+    # Play in background thread so we don't block the response
+    thread = threading.Thread(target=_play, daemon=True)
+    thread.start()
 
 
 class ClipsList(View):
@@ -102,22 +106,31 @@ class ClipDeleteView(DeleteView):
 
 class TriggerChime(View):
     def get(self, request):
-        play_next = False
-        clips = Clip.objects.all().order_by('order')
-        last_played = Clip.objects.filter(last_played=True)
-        if list(clips)[-1].last_played or not last_played:
-            play_next = True
-            if list(clips)[-1].last_played:
-                list(clips)[-1].last_played = False
-        for clip in clips:
+        clips = list(Clip.objects.all().order_by('order'))
+        
+        # Handle empty clip list
+        if not clips:
+            return JsonResponse({"success": False, "error": "No clips available"}, status=200)
+        
+        # Find the next clip to play
+        last_played_idx = -1
+        for idx, clip in enumerate(clips):
             if clip.last_played:
-                play_next = True
-                clip.last_played = False
-                clip.save()
-            elif play_next:
-                play_clip(clip)
-                clip.last_played = True
+                last_played_idx = idx
                 break
-        for clip in clips:
-            clip.save()
+        
+        # Calculate next clip index (cycle back to 0 if at end)
+        next_idx = (last_played_idx + 1) % len(clips)
+        
+        # Update last_played flags
+        if last_played_idx >= 0:
+            clips[last_played_idx].last_played = False
+            clips[last_played_idx].save()
+        
+        clips[next_idx].last_played = True
+        clips[next_idx].save()
+        
+        # Play the clip
+        play_clip(clips[next_idx])
+        
         return JsonResponse({"success": True}, status=200)

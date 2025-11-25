@@ -8,7 +8,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from collections import Counter
 import pytz
-from datetime import datetime
+from datetime import datetime, date
 
 
 tz = pytz.timezone(settings.LOCAL_TIMEZONE)
@@ -28,10 +28,21 @@ class DayTrackingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         dates = Track.objects.all().order_by('created')
-        context['start_date'] = dates.first().created.date()
-        context['end_date'] = dates.last().created.date()
-        context['min_date'] = dates.first().created.date()
-        context['max_date'] = dates.last().created.date()
+        
+        if dates.exists():
+            context['start_date'] = dates.first().created.date()
+            context['end_date'] = dates.last().created.date()
+            context['min_date'] = dates.first().created.date()
+            context['max_date'] = dates.last().created.date()
+            context['has_data'] = True
+        else:
+            today = date.today()
+            context['start_date'] = today
+            context['end_date'] = today
+            context['min_date'] = today
+            context['max_date'] = today
+            context['has_data'] = False
+        
         context['page'] = 'day-tracking'
         return context
 
@@ -42,8 +53,17 @@ class HourTrackingView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         dates = Track.objects.all().order_by('created')
-        context['min_date'] = dates.first().created.date()
-        context['max_date'] = dates.last().created.date()
+        
+        if dates.exists():
+            context['min_date'] = dates.first().created.date()
+            context['max_date'] = dates.last().created.date()
+            context['has_data'] = True
+        else:
+            today = date.today()
+            context['min_date'] = today
+            context['max_date'] = today
+            context['has_data'] = False
+        
         context['page'] = 'day-tracking'
         return context
 
@@ -69,9 +89,12 @@ class HourTrackingDataView(View):
         hour_counts = Counter(hours_of_day)
         percentages = [0 for _ in range(24)]
         counts = [0 for _ in range(24)]
-        for hour, count in sorted(hour_counts.items()):
-            counts[hour] = count
-            percentages[hour] = round(count / len(hours_of_day), 2) * 100
+        
+        if hours_of_day:
+            for hour, count in sorted(hour_counts.items()):
+                counts[hour] = count
+                percentages[hour] = round(count / len(hours_of_day), 2) * 100
+        
         hour_names = []
         for i in range(24):
             hour_names.append(f'{i}:00')
@@ -99,9 +122,12 @@ class DayTrackingDataView(View):
         day_counts = Counter(days_of_week)
         percentages = [0 for _ in range(7)]
         counts = [0 for _ in range(7)]
-        for day_number, count in sorted(day_counts.items()):
-            counts[day_number] = count
-            percentages[day_number] = round(count / len(days_of_week), 2) * 100
+        
+        if days_of_week:
+            for day_number, count in sorted(day_counts.items()):
+                counts[day_number] = count
+                percentages[day_number] = round(count / len(days_of_week), 2) * 100
+        
         ctx = {
             'labels': day_names,
             'data': percentages,

@@ -49,8 +49,11 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'clips',
     'tracking',
-    'debug_toolbar',
 ]
+
+# Only add debug toolbar in DEBUG mode
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -60,8 +63,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+# Only add debug toolbar middleware in DEBUG mode
+if DEBUG:
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'chime.urls'
 

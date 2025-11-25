@@ -1,10 +1,61 @@
 {% extends 'base.html' %}
-{% block title %}Door Chime Customizer{% endblock title %}
+{% load static %}
+
+{% block title %}Chime - Door Chime Customizer{% endblock title %}
+
 {% block content %}
-    <ul class="list-group">
-        <li class="list-group-item"><a href="{% url 'clip_list' %}">Clip List</a></li>
-        <li class="list-group-item">Add Clips</li>
-        <li class="list-group-item">Arrange Clips</li>
-        <li class="list-group-item">Modify Clips</li>
-    </ul>
+<div class="fade-in">
+    <!-- Hero Section -->
+    <section class="home-hero">
+        <h1>Door Chime Customizer</h1>
+        <p>Personalize your entrance alerts with custom audio clips. Manage, arrange, and trigger your chimes with ease.</p>
+        <a href="{% url 'clip_list' %}" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Get Started
+        </a>
+    </section>
+
+    <!-- Feature Grid -->
+    <div class="feature-grid">
+        <a href="{% url 'clip_list' %}" class="feature-card slide-up" style="animation-delay: 100ms;">
+            <div class="feature-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </div>
+            <h3>Browse Clips</h3>
+            <p>View and manage your collection of audio clips. Drag and drop to reorder them.</p>
+        </a>
+
+        <a href="{% url 'add_clip' %}" class="feature-card slide-up" style="animation-delay: 200ms;">
+            <div class="feature-card-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3>Upload New</h3>
+            <p>Add new audio clips to your library. Support for various audio formats.</p>
+        </a>
+
+        <a href="{% url 'day_tracking' %}" class="feature-card slide-up" style="animation-delay: 300ms;">
+            <div class="feature-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </div>
+            <h3>View Analytics</h3>
+            <p>Track door activity patterns with detailed charts and statistics.</p>
+        </a>
+
+        <div class="feature-card slide-up trigger-card" style="animation-delay: 400ms; cursor: pointer;" onclick="document.querySelector('.nav-link.trigger').click()">
+            <div class="feature-card-icon" style="background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <h3>Ring Chime</h3>
+            <p>Test your chime setup by manually triggering a notification.</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats Section -->
+    <section style="margin-top: 4rem; text-align: center;">
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Ready to customize your door chime experience
+        </p>
+    </section>
+</div>
 {% endblock content %}

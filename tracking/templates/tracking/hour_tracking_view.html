@@ -1,183 +1,364 @@
-{% extends 'base.html' %}{% load static %}
-{% block title %}Tracking{% endblock title %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hourly Analytics - Chime{% endblock title %}
+
 {% block custom_css %}
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
+<link href="{% static 'clips/style.css' %}" rel="stylesheet"/>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+    .analytics-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-xl);
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+    
+    .analytics-header h1 {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin: 0;
+    }
+    
+    .analytics-header h1 svg {
+        color: var(--accent);
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: var(--space-sm);
+    }
+    
+    .view-toggle .btn {
+        padding: var(--space-sm) var(--space-lg);
+    }
+    
+    .instructions-card {
+        margin-bottom: var(--space-xl);
+    }
+    
+    .instructions-card .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .instructions-card .card-header:hover {
+        background: rgba(99, 102, 241, 0.15) !important;
+    }
+    
+    #arrow {
+        transition: transform var(--transition-base);
+    }
+    
+    #instructions_body {
+        display: none;
+        padding: var(--space-lg);
+    }
+    
+    #instructions_body p {
+        margin-bottom: var(--space-md);
+        color: var(--text-secondary);
+    }
+    
+    #instructions_body p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .chart-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .chart-canvas-wrapper {
+        position: relative;
+        height: 400px;
+        margin-bottom: var(--space-xl);
+    }
+    
+    .chart-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--border-subtle);
+        align-items: center;
+    }
+    
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+    
+    .control-label {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .chart-controls input[type="date"] {
+        width: auto;
+        min-width: 150px;
+    }
+    
+    .chart-controls select {
+        min-width: 140px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+    }
+    
+    .checkbox-group:hover {
+        background: var(--bg-card-hover);
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .checkbox-group label {
+        margin: 0;
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .analytics-header {
+            flex-direction: column;
+            align-items: flex-start;
         }
-
-        .chartCard {
-            width: 100vw;
-            height: calc(100vh - 40px);
-            background: rgba(61, 118, 153, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        
+        .chart-canvas-wrapper {
+            height: 300px;
         }
-
-        .chartBox {
-            width: 700px;
-            padding: 20px;
-            border-radius: 20px;
-            border: solid 3px rgba(54, 162, 235, 1);
-            background: white;
-            margin-bottom: calc(100vh / 3)
+        
+        .chart-controls {
+            flex-direction: column;
+            align-items: stretch;
         }
-
-        select {
-            padding: 4px;
+        
+        .control-group {
+            width: 100%;
         }
-
-        #instructions_body {
-            display: none;
+        
+        .chart-controls input[type="date"],
+        .chart-controls select {
+            flex: 1;
         }
-
-        #arrow {
-            color: #AAA;
-        }
-    </style>
+    }
+</style>
 {% endblock custom_css %}
+
 {% block content %}
-    <div class="card">
+<div class="fade-in">
+    <!-- Header -->
+    <div class="analytics-header">
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Hourly Analytics
+        </h1>
+        <div class="view-toggle">
+            <a href="{% url 'day_tracking' %}" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                Daily
+            </a>
+            <span class="btn btn-primary" style="cursor: default;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Hourly
+            </span>
+        </div>
+    </div>
+    
+    <!-- Instructions Card -->
+    <div class="card instructions-card">
         <div class="card-header" id="instructions">
-            Instructions <span id="arrow">&#x25B8;</span>
+            <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                How to use this chart
+            </span>
+            <span id="arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
         </div>
-        <div class="card-body" id="instructions_body">
-            <h5 class="card-title">How to use</h5>
-            <p class="card-text">This graph shows the average percentage of traffic by hour. If you want to see the data
-                for a specific set of dates, select the range of dates from the dropdown menus.</p>
-            <p class="card-text">If you want to see the traffic only for specific days of the week, deselect "All days"
-                and select the day you want to see traffic for.</p>
-            <p class="card-text">To see traffic average for days of the week, click the button below.</p>
+        <div id="instructions_body">
+            <p><strong>Default View:</strong> This chart shows the average hourly traffic pattern across all days.</p>
+            <p><strong>Filter by Day:</strong> Uncheck "All days" and select a specific day of the week to see its hourly pattern.</p>
+            <p><strong>Filter by Date:</strong> Use the date pickers to narrow down the data to a specific time range.</p>
         </div>
-        <a href="{% url 'day_tracking' %}" class="btn btn-primary" style="width: 150px; margin: 20px;">Daily Data</a>
     </div>
-    <div class="chartCard">
-        <div class="chartBox">
+    
+    <!-- Chart Container -->
+    <div class="chart-container">
+        <div class="chart-canvas-wrapper">
             <canvas id="tracking-chart"></canvas>
-            {#No filters on dates, because they are using the text from the URL#}
-            <input onchange="updateChart()" type="date" id="start_date" min="{{ min_date|date:"Y-m-d" }}"
-                   max="{{ max_date|date:"Y-m-d" }}"
-                   value="{% if start_date %}{{ start_date }}{% else %}{{ min_date|date:"Y-m-d" }}{% endif %}">
-            <input onchange="updateChart()" type="date" id="end_date" min="{{ min_date|date:"Y-m-d" }}"
-                   max="{{ max_date|date:"Y-m-d" }}"
-                   value="{% if end_date %}{{ end_date }}{% else %}{{ max_date|date:"Y-m-d" }}{% endif %}">
-            <select id="dow" onchange="updateChart()" name="dow">
-                <option value="0"{% if pk == 0 %} selected{% endif %}>Monday</option>
-                <option value="1"{% if pk == 1 %} selected{% endif %}>Tuesday</option>
-                <option value="2"{% if pk == 2 %} selected{% endif %}>Wednesday</option>
-                <option value="3"{% if pk == 3 %} selected{% endif %}>Thursday</option>
-                <option value="4"{% if pk == 4 %} selected{% endif %}>Friday</option>
-                <option value="5"{% if pk == 5 %} selected{% endif %}>Saturday</option>
-                <option value="6"{% if pk == 6 %} selected{% endif %}>Sunday</option>
-            </select>
-            <input type="checkbox" id="all_days" onchange="updateChart()"{% if all_days %} checked{% endif %}>
-            <label for="all_days">All days</label>
+        </div>
+        <div class="chart-controls">
+            <div class="control-group">
+                <span class="control-label">From:</span>
+                <input onchange="updateChart()" type="date" id="start_date" 
+                       min="{{ min_date|date:'Y-m-d' }}" max="{{ max_date|date:'Y-m-d' }}" 
+                       value="{% if start_date %}{{ start_date }}{% else %}{{ min_date|date:'Y-m-d' }}{% endif %}">
+            </div>
+            <div class="control-group">
+                <span class="control-label">To:</span>
+                <input onchange="updateChart()" type="date" id="end_date" 
+                       min="{{ min_date|date:'Y-m-d' }}" max="{{ max_date|date:'Y-m-d' }}" 
+                       value="{% if end_date %}{{ end_date }}{% else %}{{ max_date|date:'Y-m-d' }}{% endif %}">
+            </div>
+            <div class="control-group">
+                <span class="control-label">Day:</span>
+                <select id="dow" onchange="updateChart()" name="dow">
+                    <option value="0"{% if pk == 0 %} selected{% endif %}>Monday</option>
+                    <option value="1"{% if pk == 1 %} selected{% endif %}>Tuesday</option>
+                    <option value="2"{% if pk == 2 %} selected{% endif %}>Wednesday</option>
+                    <option value="3"{% if pk == 3 %} selected{% endif %}>Thursday</option>
+                    <option value="4"{% if pk == 4 %} selected{% endif %}>Friday</option>
+                    <option value="5"{% if pk == 5 %} selected{% endif %}>Saturday</option>
+                    <option value="6"{% if pk == 6 %} selected{% endif %}>Sunday</option>
+                </select>
+            </div>
+            <div class="checkbox-group" onclick="document.getElementById('all_days').click();">
+                <input type="checkbox" id="all_days" onchange="updateChart()"{% if all_days %} checked{% endif %}>
+                <label for="all_days">All days</label>
+            </div>
         </div>
     </div>
+</div>
 {% endblock content %}
+
 {% block custom_javascript %}
-    <script>
-        const rightArrow = '&#x25B8;';
-        const upArrow = '&#x25BE;';
-
-        $(document).ready(function () {
-            $("#instructions").click(function () {
-                $("#instructions_body").slideToggle(300, function () {
-                    if ($("#instructions_body").is(':visible')) {
-                        $("#arrow").html(upArrow);
-                        console.log("visible");
-                    } else {
-                        $("#arrow").html(rightArrow);
-                        console.log("not visible");
-                    }
-                });
-            });
-        });
-
-        function updateChart() {
-            document.getElementById('start_date').setAttribute('max', document.getElementById('end_date').value);
-            document.getElementById('end_date').setAttribute('min', document.getElementById('start_date').value);
-            if (document.getElementById('all_days').checked) {
-                document.getElementById('dow').setAttribute("disabled", "disabled");
-            } else {
-                document.getElementById('dow').removeAttribute("disabled");
-            }
-
-            async function fetchJSON() {
-                const url = {% url 'day_tracking' %} +'data/' + document.getElementById('dow').value + '/' + document.getElementById('start_date').value + '/' + document.getElementById('end_date').value + '/' + document.getElementById('all_days').checked;
-                const response = await fetch(url);
-                const datapoints = await response.json();
-                return datapoints;
-            }
-
-            fetchJSON().then(datapoints => {
-                const percentages = datapoints.data;
-                const counts = datapoints.data2;
-                const labels = datapoints.labels;
-                chart.config.data.datasets[0].data = percentages;
-                chart.config.data.datasets[1].data = counts;
-                chart.config.data.labels = labels;
-                chart.update();
-            })
+<script>
+    function updateChart() {
+        document.getElementById('start_date').setAttribute('max', document.getElementById('end_date').value);
+        document.getElementById('end_date').setAttribute('min', document.getElementById('start_date').value);
+        
+        if (document.getElementById('all_days').checked) {
+            document.getElementById('dow').setAttribute('disabled', 'disabled');
+        } else {
+            document.getElementById('dow').removeAttribute('disabled');
         }
 
-        updateChart();
+        async function fetchJSON() {
+            const url = '{% url 'day_tracking' %}' + 'data/' + document.getElementById('dow').value + '/' + document.getElementById('start_date').value + '/' + document.getElementById('end_date').value + '/' + document.getElementById('all_days').checked;
+            const response = await fetch(url);
+            const datapoints = await response.json();
+            return datapoints;
+        }
 
-        const data = {
-            datasets: [
-                {
-                    label: 'Percentage',
-                    backgroundColor: '#85c1e9',
-                    borderColor: 'blue',
-                    borderWidth: 2,
-                    borderRadius: 3
-                },
-                {
-                    label: 'Count',
-                    backgroundColor: '#fff9c4',
-                    borderColor: 'gold',
-                    borderWidth: 2,
-                    borderRadius: 3,
-                }
-            ]
-        };
+        fetchJSON().then(datapoints => {
+            const percentages = datapoints.data;
+            const counts = datapoints.data2;
+            const labels = datapoints.labels;
+            chart.config.data.datasets[0].data = percentages;
+            chart.config.data.datasets[1].data = counts;
+            chart.config.data.labels = labels;
+            chart.update();
+        });
+    }
 
-        const config = {
-            type: 'bar',
-            data,
-            options: {
-                responsive: true,
+    updateChart();
+
+    const data = {
+        datasets: [
+            {
+                label: 'Percentage',
+                backgroundColor: 'rgba(6, 182, 212, 0.8)',
+                borderColor: 'rgba(6, 182, 212, 1)',
+                borderWidth: 2,
+                borderRadius: 6,
+                hoverBackgroundColor: 'rgba(34, 211, 238, 1)',
+            },
+            {
+                label: 'Count',
+                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                borderColor: 'rgba(245, 158, 11, 1)',
+                borderWidth: 2,
+                borderRadius: 6,
+                hoverBackgroundColor: 'rgba(251, 191, 36, 1)',
+            }
+        ]
+    };
+
+    const config = {
+        type: 'bar',
+        data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
                 legend: {
                     position: 'top',
+                    labels: {
+                        color: '#94a3b8',
+                        padding: 20,
+                        font: { size: 13 }
+                    }
                 },
                 title: {
                     display: true,
-                    text: 'People Tracking Bar Chart'
+                    text: 'Hourly Traffic Pattern',
+                    color: '#f1f5f9',
+                    font: { size: 18, weight: '600' },
+                    padding: { bottom: 20 }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' }
                 }
             }
-        };
-
-        const chart = new Chart(
-            document.getElementById('tracking-chart'),
-            config
-        );
-
-        function clickHandler(click) {
-            const points = chart.getElementsAtEventForMode(click, 'nearest', {intersect: true}, true);
-            if (points.length) {
-                const firstPoint = points[0];
-                const key = firstPoint.index
-                const start_date = $('#start_date').val()
-                const end_date = $('#end_date').val()
-                window.open('{% url 'day_tracking' %}' + key + '/' + start_date + '/' + end_date + '/', "_self")
-            }
         }
+    };
 
-        chart.canvas.onclick = clickHandler;
-    </script>
+    const chart = new Chart(document.getElementById('tracking-chart'), config);
+
+    function clickHandler(click) {
+        const points = chart.getElementsAtEventForMode(click, 'nearest', {intersect: true}, true);
+        if (points.length) {
+            const firstPoint = points[0];
+            const key = firstPoint.index;
+            const start_date = $('#start_date').val();
+            const end_date = $('#end_date').val();
+            window.open('{% url 'day_tracking' %}' + key + '/' + start_date + '/' + end_date + '/', '_self');
+        }
+    }
+
+    $(document).ready(function () {
+        $("#instructions").click(function () {
+            $("#instructions_body").slideToggle(300, function () {
+                if ($("#instructions_body").is(':visible')) {
+                    $("#arrow").css('transform', 'rotate(180deg)');
+                } else {
+                    $("#arrow").css('transform', 'rotate(0deg)');
+                }
+            });
+        });
+    });
+
+    chart.canvas.onclick = clickHandler;
+</script>
 {% endblock custom_javascript %}

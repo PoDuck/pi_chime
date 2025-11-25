@@ -1,18 +1,585 @@
-{% extends 'base.html' %}{% load crispy_forms_tags %}
-
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}Edit Clip - Chime{% endblock title %}
+
+{% block custom_css %}
+<style>
+    .update-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .update-header {
+        text-align: center;
+        margin-bottom: var(--space-xl);
+    }
+    
+    .update-header h1 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-sm);
+    }
+    
+    .update-header h1 svg {
+        color: var(--primary-light);
+    }
+    
+    .update-header p {
+        color: var(--text-secondary);
+    }
+    
+    .update-card {
+        background: var(--gradient-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+    }
+    
+    .update-card-header {
+        background: var(--gradient-primary);
+        padding: var(--space-lg) var(--space-xl);
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .update-card-body {
+        padding: var(--space-xl);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: var(--space-md);
+        margin-top: var(--space-xl);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--border-subtle);
+    }
+    
+    /* Drag and Drop Zones */
+    .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        background: var(--bg-input);
+        margin-bottom: var(--space-lg);
+    }
+    
+    .drop-zone:hover, .drop-zone.drag-over {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+    
+    .drop-zone.drag-over {
+        transform: scale(1.02);
+    }
+    
+    .drop-zone-icon {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto var(--space-md);
+        color: var(--text-muted);
+    }
+    
+    .drop-zone:hover .drop-zone-icon,
+    .drop-zone.drag-over .drop-zone-icon {
+        color: var(--primary);
+    }
+    
+    .drop-zone-text {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-sm);
+    }
+    
+    .drop-zone-hint {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+    
+    .drop-zone input[type="file"] {
+        display: none;
+    }
+    
+    .drop-zone-preview {
+        margin-top: var(--space-md);
+    }
+    
+    .drop-zone-preview img {
+        max-width: 100px;
+        max-height: 100px;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .drop-zone-preview .file-name {
+        color: var(--primary-light);
+        font-weight: 500;
+        margin-top: var(--space-sm);
+    }
+    
+    .file-fields-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+    }
+    
+    .current-file {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        margin-top: var(--space-sm);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+    
+    .current-file svg {
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .file-fields-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Dual Range Slider Styles */
+    .time-slider-container {
+        margin: var(--space-xl) 0;
+        padding: var(--space-lg);
+        background: var(--bg-elevated);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+    }
+    
+    .time-slider-container.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .time-slider-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-md);
+    }
+    
+    .time-slider-label h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .time-slider-duration {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .dual-range-slider {
+        position: relative;
+        height: 40px;
+        margin: var(--space-md) 0;
+    }
+    
+    .slider-track {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: var(--bg-input);
+        border-radius: var(--radius-full);
+        transform: translateY(-50%);
+    }
+    
+    .slider-range {
+        position: absolute;
+        top: 50%;
+        height: 8px;
+        background: var(--gradient-primary);
+        border-radius: var(--radius-full);
+        transform: translateY(-50%);
+    }
+    
+    .slider-handle {
+        position: absolute;
+        top: 50%;
+        width: 24px;
+        height: 24px;
+        background: white;
+        border: 3px solid var(--primary);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        cursor: grab;
+        z-index: 2;
+        transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    }
+    
+    .slider-handle:hover {
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.2);
+    }
+    
+    .slider-handle:active {
+        cursor: grabbing;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    
+    .slider-handle.start {
+        z-index: 3;
+    }
+    
+    .time-displays {
+        display: flex;
+        justify-content: space-between;
+        margin-top: var(--space-md);
+    }
+    
+    .time-display {
+        text-align: center;
+    }
+    
+    .time-display-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .time-display-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-family: monospace;
+    }
+    
+    .time-display-value.start-time {
+        color: var(--primary-light);
+    }
+    
+    .time-display-value.end-time {
+        color: var(--secondary-light);
+    }
+    
+    /* Hidden original inputs */
+    #div_id_start_time, #div_id_end_time {
+        display: none;
+    }
+</style>
+{% endblock custom_css %}
+
 {% block content %}
-    <div class="card">
-        <div class="card-header bg-info">
-            Update
+<div class="update-container fade-in">
+    <div class="update-header">
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Edit Clip
+        </h1>
+        <p>Modify the details of your audio clip</p>
+    </div>
+    
+    <div class="update-card">
+        <div class="update-card-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Clip Settings
         </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+        <div class="update-card-body">
+            <form method="post" enctype="multipart/form-data" id="updateForm">
                 {% csrf_token %}
-                {{ form|crispy }}
-                <button type="submit">Update Clip</button>
+                
+                <div class="file-fields-grid">
+                    <!-- Audio File Drop Zone -->
+                    <div>
+                        <label>Audio File</label>
+                        <div class="drop-zone" id="audioDropZone">
+                            <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                            <p class="drop-zone-text">Drag & drop to replace audio</p>
+                            <p class="drop-zone-hint">or click to browse</p>
+                            <input type="file" name="file" accept="audio/*" id="audioInput">
+                            <div class="drop-zone-preview" id="audioPreview"></div>
+                        </div>
+                        {% if object.file %}
+                        <div class="current-file">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                            Current: {{ object.file.name|truncatechars:30 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Thumbnail Drop Zone -->
+                    <div>
+                        <label>Thumbnail Image</label>
+                        <div class="drop-zone" id="thumbDropZone">
+                            {% if object.thumbnail %}
+                            <img src="{{ object.thumbnail.url }}" style="max-width: 80px; max-height: 80px; border-radius: 8px; margin-bottom: 10px;">
+                            {% else %}
+                            <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            {% endif %}
+                            <p class="drop-zone-text">Drag & drop to replace image</p>
+                            <p class="drop-zone-hint">or click to browse</p>
+                            <input type="file" name="thumbnail" accept="image/*" id="thumbInput">
+                            <div class="drop-zone-preview" id="thumbPreview"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                {{ form.game|as_crispy_field }}
+                {{ form.title|as_crispy_field }}
+                
+                <!-- Dual Range Slider for Start/End Time -->
+                <div class="time-slider-container" id="timeSliderContainer">
+                    <div class="time-slider-label">
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Clip Range
+                        </h4>
+                        <span class="time-slider-duration" id="durationDisplay">Loading...</span>
+                    </div>
+                    
+                    <div class="dual-range-slider" id="dualRangeSlider">
+                        <div class="slider-track"></div>
+                        <div class="slider-range" id="sliderRange"></div>
+                        <div class="slider-handle start" id="startHandle"></div>
+                        <div class="slider-handle end" id="endHandle"></div>
+                    </div>
+                    
+                    <div class="time-displays">
+                        <div class="time-display">
+                            <div class="time-display-label">Start</div>
+                            <div class="time-display-value start-time" id="startTimeDisplay">0:00</div>
+                        </div>
+                        <div class="time-display">
+                            <div class="time-display-label">End</div>
+                            <div class="time-display-value end-time" id="endTimeDisplay">0:00</div>
+                        </div>
+                    </div>
+                    
+                    <audio id="audioPreviewPlayer" style="display: none;"></audio>
+                </div>
+                
+                {{ form.start_time|as_crispy_field }}
+                {{ form.end_time|as_crispy_field }}
+                {{ form.max_volume|as_crispy_field }}
+                
+                <div class="form-actions">
+                    <a href="{% url 'clip_list' %}" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save Changes
+                    </button>
+                </div>
             </form>
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block custom_javascript %}
+<script>
+$(function() {
+    // Initial values from Django
+    const initialStartTime = parseFloat('{{ object.start_time }}') || 0;
+    const initialEndTime = parseFloat('{{ object.end_time }}') || 0;
+    const audioUrl = '{{ object.file.url }}';
+    
+    // Dual Range Slider Logic
+    let duration = 0;
+    let startTime = initialStartTime;
+    let endTime = initialEndTime;
+    let isDragging = null;
+    
+    const container = document.getElementById('timeSliderContainer');
+    const slider = document.getElementById('dualRangeSlider');
+    const startHandle = document.getElementById('startHandle');
+    const endHandle = document.getElementById('endHandle');
+    const sliderRange = document.getElementById('sliderRange');
+    const startTimeDisplay = document.getElementById('startTimeDisplay');
+    const endTimeDisplay = document.getElementById('endTimeDisplay');
+    const durationDisplay = document.getElementById('durationDisplay');
+    const audioPreview = document.getElementById('audioPreviewPlayer');
+    
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return mins + ':' + secs.toString().padStart(2, '0');
+    }
+    
+    function updateSliderUI() {
+        if (duration <= 0) return;
+        
+        const startPercent = (startTime / duration) * 100;
+        const endPercent = (endTime / duration) * 100;
+        
+        startHandle.style.left = startPercent + '%';
+        endHandle.style.left = endPercent + '%';
+        sliderRange.style.left = startPercent + '%';
+        sliderRange.style.width = (endPercent - startPercent) + '%';
+        
+        startTimeDisplay.textContent = formatTime(startTime);
+        endTimeDisplay.textContent = formatTime(endTime);
+        
+        // Update hidden form fields
+        document.getElementById('id_start_time').value = startTime.toFixed(2);
+        document.getElementById('id_end_time').value = endTime.toFixed(2);
+    }
+    
+    function getPositionFromEvent(e) {
+        const rect = slider.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let percent = (clientX - rect.left) / rect.width;
+        percent = Math.max(0, Math.min(1, percent));
+        return percent * duration;
+    }
+    
+    function onDragStart(e, handle) {
+        e.preventDefault();
+        isDragging = handle;
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('touchmove', onDragMove);
+        document.addEventListener('touchend', onDragEnd);
+    }
+    
+    function onDragMove(e) {
+        if (!isDragging) return;
+        
+        const time = getPositionFromEvent(e);
+        
+        if (isDragging === 'start') {
+            startTime = Math.min(time, endTime - 0.1);
+            startTime = Math.max(0, startTime);
+        } else {
+            endTime = Math.max(time, startTime + 0.1);
+            endTime = Math.min(duration, endTime);
+        }
+        
+        updateSliderUI();
+    }
+    
+    function onDragEnd() {
+        isDragging = null;
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchmove', onDragMove);
+        document.removeEventListener('touchend', onDragEnd);
+    }
+    
+    startHandle.addEventListener('mousedown', (e) => onDragStart(e, 'start'));
+    startHandle.addEventListener('touchstart', (e) => onDragStart(e, 'start'));
+    endHandle.addEventListener('mousedown', (e) => onDragStart(e, 'end'));
+    endHandle.addEventListener('touchstart', (e) => onDragStart(e, 'end'));
+    
+    // Load existing audio duration
+    if (audioUrl) {
+        audioPreview.src = audioUrl;
+        audioPreview.addEventListener('loadedmetadata', function() {
+            duration = audioPreview.duration;
+            
+            // If end time is 0 or same as start, use full duration
+            if (endTime <= startTime) {
+                endTime = duration;
+            }
+            
+            durationDisplay.textContent = 'Duration: ' + formatTime(duration);
+            updateSliderUI();
+        });
+    }
+    
+    // Load audio duration when new file is selected
+    function loadAudioDuration(file) {
+        const url = URL.createObjectURL(file);
+        audioPreview.src = url;
+        
+        audioPreview.addEventListener('loadedmetadata', function() {
+            duration = audioPreview.duration;
+            startTime = 0;
+            endTime = duration;
+            
+            durationDisplay.textContent = 'Duration: ' + formatTime(duration);
+            updateSliderUI();
+            URL.revokeObjectURL(url);
+        }, { once: true });
+    }
+    
+    // Drop zone setup
+    function setupDropZone(dropZoneId, inputId, previewId, isImage) {
+        const dropZone = document.getElementById(dropZoneId);
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        
+        dropZone.addEventListener('click', () => input.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                updatePreview(input.files[0], preview, isImage, dropZone);
+                
+                if (!isImage && input.files[0].type.startsWith('audio/')) {
+                    loadAudioDuration(input.files[0]);
+                }
+            }
+        });
+        
+        input.addEventListener('change', () => {
+            if (input.files.length) {
+                updatePreview(input.files[0], preview, isImage, dropZone);
+                
+                if (!isImage && input.files[0].type.startsWith('audio/')) {
+                    loadAudioDuration(input.files[0]);
+                }
+            }
+        });
+    }
+    
+    function updatePreview(file, preview, isImage, dropZone) {
+        preview.innerHTML = '';
+        
+        const icon = dropZone.querySelector('.drop-zone-icon');
+        if (icon) icon.style.display = 'none';
+        
+        const existingImg = dropZone.querySelector('img:not(.preview-img)');
+        if (existingImg) existingImg.style.display = 'none';
+        
+        if (isImage && file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.className = 'preview-img';
+            preview.appendChild(img);
+        }
+        
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = file.name;
+        preview.appendChild(fileName);
+    }
+    
+    setupDropZone('audioDropZone', 'audioInput', 'audioPreview', false);
+    setupDropZone('thumbDropZone', 'thumbInput', 'thumbPreview', true);
+});
+</script>
 {% endblock %}

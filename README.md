@@ -1,207 +1,337 @@
-## Description
+# Door Chime Customizer
 
-This gives you the ability to setup a triggered sound to play on a raspberry pi.  The initial reason for me to make this was to change the terrible sound that my ancient door chime made.  It can be triggered by anything, for any reason though.
+A Raspberry Pi-based door chime system that plays custom audio clips when triggered by a GPIO sensor. Perfect for replacing boring doorbells with video game sounds, music clips, or any audio you like.
 
 ## Features
 
-Remote upload of sound clips.
-Ordering, updating, and deleting of sound clips.
-Remote triggering of device.
+- **Web Interface** - Upload, manage, and reorder audio clips from any device on your network
+- **Drag-and-Drop Ordering** - Easily reorder clips with smooth animations
+- **Clip Rotation** - Automatically cycles through your playlist with each trigger
+- **Analytics Dashboard** - Track door activity by day of week and hour
+- **Push Notifications** - Optional Gotify integration for mobile alerts
+- **GPIO Trigger** - Hardware trigger via magnetic door sensor or button
+- **Dark/Light Mode** - Toggle between themes in the UI
 
-# Installation instructions
+## Requirements
 
-This app was built on django.  It runs as a wsgi application using a web server.  I will use Apache as the server in these instructions.
+### Hardware
+- Raspberry Pi (tested on Pi 4, should work on Pi 3/Zero 2)
+- Audio output (3.5mm jack, HDMI, or USB audio)
+- Magnetic door sensor or momentary switch
+- Speaker/amplifier
 
-This app was meant to run on a lan, behind a firewall/router, where people from the internet can't access it.  I did nothing to enable this app over the internet.  There is essentially no security to keep people from changing things.  If you want that, you will need to do more work to get things secure.
+### Software
+- Raspberry Pi OS Lite (Bookworm or newer recommended)
+- Python 3.9+
+- Apache2 with mod_wsgi
+- mpg123 (audio player)
 
-The first thing to do is install a minimal Raspberry Pi image.  I suggest Raspberry Pi OS Lite, using the Raspberry Pi Imager.  During the install, it will ask you if you would like to apply OS customization settings.  Click "Edit Settings", and I suggest setting a hostname.  I chose chime.local.  This is also where you can set your username, password, wifisettings, timezone, and keyboard.  Once you have created the boot media, boot it, and update it.  Once that is done, clone this repository to your user directory.
+## Installation
+
+### 1. Initial Raspberry Pi Setup
+
+Install Raspberry Pi OS Lite using the Raspberry Pi Imager. During setup:
+- Set a hostname (e.g., `chime.local`)
+- Configure WiFi credentials
+- Set username and password
+- Enable SSH
+
+Boot the Pi and update the system:
 
 ```bash
-git clone *this repo*
+sudo apt update && sudo apt upgrade -y
 ```
 
-Once that is done, you should create a virtual environment.
-
-First install python and pip.
+### 2. Install System Dependencies
 
 ```bash
-sudo apt install python3 python3-pip
+sudo apt install -y python3 python3-pip python3-venv git apache2 \
+    libapache2-mod-wsgi-py3 mpg123
 ```
 
-Then, install virtualenv.
+**Note:** `mpg123` is required for audio playback. It's lightweight and provides low-latency MP3 playback.
+
+### 3. Clone the Repository
 
 ```bash
-sudo pip3 install virtualenv
+cd ~
+git clone https://github.com/yourusername/chime.git
+cd chime
 ```
 
-Then, install virtualenvwrapper.
+### 4. Set Up Python Virtual Environment
 
 ```bash
-sudo pip3 install virtualenvwrapper
-```
-
-Now, we need to edit the `.bashrc` file.
-
-```bash
-nano ~/.bashrc
-```
-
-At the end of `.bashrc`, add the following lines:
-
-```bash
-export WORKON_HOME=$HOME/.virtualenvs
-VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
-```
-
-To get virtualenvwrapper working, we need to either exit the shell and reopen it, or type:
-
-```bash
-source ~/.bashrc
-```
-
-Now, any time we want to create a virtual environment, we can use `mkvirtualenv`.  Let's make a virtualenv for this app and call it "chime".
-
-```bash
-mkvirtualenv chime
-```
-
-You will now notice that your prompt has (chime) at the front of it, signifying that you are in a virtual environment.  All python commands we type will now be with that virtual python environment.
-
-We have some environment variables we need to set.  This can be done one several ways.  I will explain it from a .env file.
-
-This has no .env file stored in the repo, so you have to make it yourself.  It has several variables in it.  Edit these variables to fit your environment, and save in the root of the project.
-
-```bash
-DEBUG=on
-# Your SECRET_KEY value for django.  A random string is fine.
-SECRET_KEY="<YOUR SECRET KEY>"
-# Domain you will access this app from
-LOCAL_DOMAIN=<YOUR LOCAL DOMAIN>
-# Port you will point your browser to.  In production, this is usually 80.
-LOCAL_PORT=<PORT>
-# If you wish to use Gotify for notifications, enter your key.
-GOTIFY_KEY="<YOUR GOTIFY KEY>"
-# Are you using this on a raspberry pi?
-ON_PI=False
-# If you want to localize displayed data use this variable, 
-# otherwise it will be displayed in UTC. 
-LOCAL_TIMEZONE=<LOCAL TIMEZONE>
-```
-
-Now, we need to install the requirements stored in requirements.txt.
-
-```bash
-cd ~/chime
+python3 -m venv ~/.virtualenvs/chime
+source ~/.virtualenvs/chime/bin/activate
 pip install -r requirements.txt
 ```
 
-Once this finishes, we need to create our database and structure.
+### 5. Configure Environment Variables
+
+Create a `.env` file in the project root:
 
 ```bash
+nano ~/chime/.env
+```
+
+Add the following (adjust values for your setup):
+
+```bash
+DEBUG=off
+SECRET_KEY="your-random-secret-key-here"
+LOCAL_DOMAIN=chime.local
+LOCAL_PORT=80
+ON_PI=True
+LOCAL_TIMEZONE=America/New_York
+
+# Optional: Gotify push notifications
+GOTIFY_URL=https://your-gotify-server.com
+GOTIFY_KEY="your-gotify-app-token"
+```
+
+### 6. Initialize the Database
+
+```bash
+cd ~/chime
+source ~/.virtualenvs/chime/bin/activate
 ./manage.py migrate
+./manage.py collectstatic --noinput
+mkdir -p media/clips media/thumbnails
 ```
 
-Now we need to collect static files, and create our media directory.
+### 7. Configure Apache
 
-```bash
-mkdir static
-./manage.py collectstatic
-mkdir media
-```
-
-Once that is done, we need to setup a web server to serve the app.
-
-```bash
-sudo apt install apache2 -y
-```
-
-Add your user to the www-data group.
+Add your user to the www-data group:
 
 ```bash
 sudo usermod -aG www-data $USER
 ```
 
-Now, to serve django, we need to install and enable mod-wsgi.
-
-```bash
-sudo apt install libapache2-mod-wsgi-py3
-sudo a2enmod wsgi
-```
-
-Let's edit the default page for apache.
+Edit the Apache configuration:
 
 ```bash
 sudo nano /etc/apache2/sites-enabled/000-default.conf
 ```
 
-Above the line with `<Virtualhost *:80>`, add the following lines.  Replace any instance of `pi` with your username.
+Replace the contents with (change `poduck` to your username):
 
 ```apache
-Alias /static /home/pi/chime/static
-<Directory /home/pi/chime/static>
+Alias /static /home/poduck/chime/static
+<Directory /home/poduck/chime/static>
     Require all granted
 </Directory>
 
-<Directory /home/pi/chime/chime>
+Alias /media /home/poduck/chime/media
+<Directory /home/poduck/chime/media>
+    Require all granted
+</Directory>
+
+<Directory /home/poduck/chime/chime>
     <Files wsgi.py>
         Require all granted
     </Files>
 </Directory>
 
-WSGIDaemonProcess django python-path=/home/pi/chime python-home=/home/poduc>
+WSGIDaemonProcess django python-path=/home/poduck/chime python-home=/home/poduck/.virtualenvs/chime
 WSGIProcessGroup django
-WSGIScriptAlias / /home/pi/chime/chime/wsgi.py
+WSGIScriptAlias / /home/poduck/chime/chime/wsgi.py
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
 ```
 
-Test the configuration.
+Test and restart Apache:
 
 ```bash
 sudo apache2ctl configtest
-```
-
-If you see `Syntax OK` at the end, you are good, even if it complains about a fully qualified domain name.  You can restart apache.
-
-```bash
 sudo systemctl restart apache2
 ```
 
-We are almost done.  Apache and django are a bit finicky about file ownership and permissions, and the easiest way I've found to make this work is to just change ownership of the entire chime folder to www-data.
+### 8. Set File Permissions
 
 ```bash
-sudo chown www-data:www-data -R ~/chime
+sudo chown -R www-data:www-data ~/chime
+sudo chmod -R 775 ~/chime
 ```
 
-At this point, you should be done with the django part of things.  We just need to add the chime.py file to systemd.
+### 9. Configure Audio Output
 
-## Setup Systemd Service
-
-We need to create a file `/lib/systemd/system/chime.service`.  This will be to start our triggering script at startup.  Put the following text in that file and save it.  Again, replace `pi` with whatever username you chose.
+Ensure your audio output is configured correctly:
 
 ```bash
+# List audio devices
+aplay -l
+
+# Test audio (should hear white noise)
+speaker-test -t wav -c 2 -l 1
+
+# If using 3.5mm jack, you may need to force output
+sudo raspi-config
+# Navigate to: System Options > Audio > Choose output
+```
+
+For best results with mpg123, identify your audio device:
+
+```bash
+# The trigger script uses hw:0,0 by default
+# Modify /home/poduck/chime/trigger/chime.py if your device differs
+```
+
+### 10. Set Up the Trigger Service
+
+Create the systemd service file:
+
+```bash
+sudo nano /etc/systemd/system/chime-trigger.service
+```
+
+Add the following (change `poduck` to your username):
+
+```ini
 [Unit]
-Description=Chime Service
-After=multi-user.target
+Description=Chime Door Trigger Service
+After=network.target
 
 [Service]
-Type=idle
-ExecStart=/home/pi/.virtualenvs/chime/bin/python /home/pi/chime/trigger/chime.py < /home/pi/chime.log 2>&1
+Type=simple
+User=root
+WorkingDirectory=/home/poduck/chime
+ExecStart=/home/poduck/.virtualenvs/chime/bin/python /home/poduck/chime/trigger/chime.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Now set permissions on the file to 644.
-
-```bash
-sudo chmod 644 /lib/systemd/system/chime.service
-```
-
-Now we reload the daemon and enable the service.
+Enable and start the service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl start chime.service
+sudo systemctl enable chime-trigger
+sudo systemctl start chime-trigger
 ```
 
-At this point, we should be completely done.  Once you upload clips, you should be able to trigger the chime by pulling pin 21 low.  If that doesn't work, reboot the pi and try again.
+Check the service status:
+
+```bash
+sudo systemctl status chime-trigger
+```
+
+## GPIO Wiring
+
+The trigger uses **BCM GPIO pin 21** (physical pin 40) with an internal pull-up resistor.
+
+### Wiring Diagram
+
+```
+Raspberry Pi GPIO Header (looking at Pi with USB ports facing down)
+                    
+   3V3  (1)  (2)  5V
+ GPIO2  (3)  (4)  5V
+ GPIO3  (5)  (6)  GND
+ GPIO4  (7)  (8)  GPIO14
+   GND  (9)  (10) GPIO15
+GPIO17 (11)  (12) GPIO18
+GPIO27 (13)  (14) GND
+GPIO22 (15)  (16) GPIO23
+   3V3 (17)  (18) GPIO24
+GPIO10 (19)  (20) GND
+ GPIO9 (21)  (22) GPIO25
+GPIO11 (23)  (24) GPIO8
+   GND (25)  (26) GPIO7
+ GPIO0 (27)  (28) GPIO1
+ GPIO5 (29)  (30) GND
+ GPIO6 (31)  (32) GPIO12
+GPIO13 (33)  (34) GND
+GPIO19 (35)  (36) GPIO16
+GPIO26 (37)  (38) GPIO20
+   GND (39)  (40) GPIO21  <-- SENSOR PIN
+```
+
+### Connection
+
+Connect your magnetic door sensor or momentary switch:
+- One wire to **Pin 40** (GPIO21)
+- Other wire to **Pin 39** (GND)
+
+### Trigger Behavior
+
+- **Trigger on HIGH**: The chime triggers immediately when GPIO21 goes HIGH (sensor activated)
+- **3-second cooldown**: After triggering, additional triggers are ignored for 3 seconds to prevent multiple clips from playing simultaneously when multiple people come through the door
+- **Instant response**: No delay on initial trigger - the clip plays immediately when the sensor is activated
+
+**Typical magnetic door sensor behavior:**
+- Door closed → Magnet near reed switch → Switch closed → GPIO21 reads LOW
+- Door opens → Magnet moves away → Switch opens → Internal pull-up pulls GPIO21 HIGH → **Chime triggers**
+
+## Usage
+
+### Web Interface
+
+Access the web interface at `http://chime.local` (or your configured hostname).
+
+- **Clip Library** - View, play, edit, and delete clips
+- **Add Clip** - Upload new MP3 files with title, game name, and thumbnail
+- **Analytics** - View door trigger patterns by day and hour
+- **Trigger Chime** - Manually trigger via the nav button
+
+### Manual Trigger
+
+You can also trigger the chime via API:
+
+```bash
+curl http://chime.local/clips/trigger/
+```
+
+## Troubleshooting
+
+### No Sound
+
+1. Check audio device: `aplay -l`
+2. Test mpg123 directly: `mpg123 /path/to/clip.mp3`
+3. Check volume: `alsamixer`
+4. Verify the audio device in trigger script matches your setup
+
+### Trigger Not Working
+
+1. Check service status: `sudo systemctl status chime-trigger`
+2. View logs: `sudo journalctl -u chime-trigger -f`
+3. Test GPIO manually:
+   ```bash
+   python3 -c "import RPi.GPIO as GPIO; GPIO.setmode(GPIO.BCM); GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP); print(GPIO.input(21))"
+   ```
+   Should print `1` (HIGH) when door closed, `0` (LOW) when open.
+
+### Web Interface 500 Error
+
+1. Check Apache logs: `sudo tail -f /var/log/apache2/error.log`
+2. Verify permissions: `ls -la ~/chime`
+3. Test Django: `cd ~/chime && source ~/.virtualenvs/chime/bin/activate && ./manage.py check`
+
+### Analytics Not Showing Data
+
+Data only appears after triggers have been logged. Open the door a few times to generate data.
+
+## Push Notifications (Optional)
+
+To receive push notifications when the door opens:
+
+1. Set up a [Gotify](https://gotify.net/) server
+2. Create an application in Gotify and get the token
+3. Add to your `.env` file:
+   ```bash
+   GOTIFY_URL=https://your-gotify-server.com
+   GOTIFY_KEY="your-app-token"
+   ```
+4. Restart the trigger service: `sudo systemctl restart chime-trigger`
+
+## License
+
+MIT License - See LICENSE file for details.
