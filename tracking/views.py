@@ -111,27 +111,35 @@ class DayTrackingDataView(View):
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, start_date, end_date):
         tz_start, tz_end = get_start_end_dates(start_date, end_date)
-        data = Track.objects.all().filter(created__date__range=(tz_start, tz_end))
+        data = Track.objects.all().filter(created__date__range=(tz_start, tz_end)).order_by('-created')
         day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         days_of_week = []
+        trigger_events = []
         for track in data:
             created_at_tz = track.created.astimezone(tz)
             # Get the day of the week (0=Monday, 6=Sunday)
             day_of_week = created_at_tz.weekday()
             days_of_week.append(day_of_week)
+            # Add to trigger events list
+            trigger_events.append({
+                'date': created_at_tz.strftime('%Y-%m-%d'),
+                'time': created_at_tz.strftime('%I:%M:%S %p'),
+                'day': day_names[day_of_week],
+            })
         day_counts = Counter(days_of_week)
         percentages = [0 for _ in range(7)]
         counts = [0 for _ in range(7)]
-        
+
         if days_of_week:
             for day_number, count in sorted(day_counts.items()):
                 counts[day_number] = count
                 percentages[day_number] = round(count / len(days_of_week), 2) * 100
-        
+
         ctx = {
             'labels': day_names,
             'data': percentages,
             'data2': counts,
+            'events': trigger_events,
         }
 
         return JsonResponse(ctx)
