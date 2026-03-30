@@ -357,6 +357,7 @@ audio {
    =================================================== */
 
 .form-control,
+.form-select,
 input[type=text],
 input[type=email],
 input[type=password],
@@ -375,6 +376,7 @@ select {
 }
 
 .form-control:focus,
+.form-select:focus,
 input:focus,
 textarea:focus,
 select:focus {
