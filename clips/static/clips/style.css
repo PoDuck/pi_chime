@@ -383,6 +383,7 @@ select:focus {
   outline: none;
   border-color: var(--primary);
   background: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
 .form-control::placeholder,
