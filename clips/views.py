@@ -18,14 +18,23 @@ from django.urls import reverse_lazy
 def play_clip(clip):
     """Play audio clip using mpg123 via sudo in background thread."""
     file_path = os.path.join(settings.MEDIA_ROOT, str(clip.file))
-    
+
     def _play():
         try:
-            subprocess.run(['sudo', 'mpg123', '-q', '-a', 'hw:0,0', file_path], timeout=60)
+            use_trim = clip.start_time > 0 or clip.end_time > 0
+            if use_trim:
+                ffmpeg_cmd = ['ffmpeg', '-ss', str(clip.start_time)]
+                if clip.end_time > 0:
+                    ffmpeg_cmd += ['-to', str(clip.end_time)]
+                ffmpeg_cmd += ['-i', file_path, '-f', 'mp3', '-loglevel', 'quiet', '-']
+                ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                subprocess.run(['sudo', 'mpg123', '-q', '-a', 'hw:0,0', '-'], stdin=ffmpeg.stdout, timeout=60)
+                ffmpeg.stdout.close()
+            else:
+                subprocess.run(['sudo', 'mpg123', '-q', '-a', 'hw:0,0', file_path], timeout=60)
         except Exception as e:
             print(f'Error playing clip: {e}')
-    
-    # Play in background thread so we don't block the response
+
     thread = threading.Thread(target=_play, daemon=True)
     thread.start()
 

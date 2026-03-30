@@ -61,16 +61,23 @@ class ChimeTrigger:
     def play_clip(self, clip):
         """Play a clip using mpg123 in a background thread."""
         file_path = os.path.join(settings.MEDIA_ROOT, str(clip.file))
-        
+
         def _play():
             try:
-                subprocess.run(
-                    ['mpg123', '-q', '-a', 'hw:0,0', file_path],
-                    timeout=60
-                )
+                use_trim = clip.start_time > 0 or clip.end_time > 0
+                if use_trim:
+                    ffmpeg_cmd = ['ffmpeg', '-ss', str(clip.start_time)]
+                    if clip.end_time > 0:
+                        ffmpeg_cmd += ['-to', str(clip.end_time)]
+                    ffmpeg_cmd += ['-i', file_path, '-f', 'mp3', '-loglevel', 'quiet', '-']
+                    ffmpeg = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                    subprocess.run(['mpg123', '-q', '-a', 'hw:0,0', '-'], stdin=ffmpeg.stdout, timeout=60)
+                    ffmpeg.stdout.close()
+                else:
+                    subprocess.run(['mpg123', '-q', '-a', 'hw:0,0', file_path], timeout=60)
             except Exception as e:
                 print(f'Error playing clip: {e}')
-        
+
         thread = threading.Thread(target=_play, daemon=True)
         thread.start()
 

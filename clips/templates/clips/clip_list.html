@@ -196,7 +196,9 @@
                 </div>
 
                 <div class="clip-controls">
-                    <audio class="clip-audio" controls>
+                    <audio class="clip-audio" controls
+                           data-start="{{ object.start_time }}"
+                           data-end="{{ object.end_time }}">
                         <source src="{{ object.file_url }}" type="audio/mp3">
                     </audio>
                     <div class="clip-actions">
@@ -235,6 +237,28 @@ $(function() {
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
+        }
+    });
+
+    // Enforce start/end range on browser audio players
+    $('audio.clip-audio').each(function() {
+        const audio = this;
+        const start = parseFloat(audio.dataset.start) || 0;
+        const end = parseFloat(audio.dataset.end) || 0;
+
+        if (start > 0 || end > 0) {
+            audio.addEventListener('loadedmetadata', function() {
+                if (start > 0) audio.currentTime = start;
+            });
+            audio.addEventListener('timeupdate', function() {
+                if (start > 0 && audio.currentTime < start) {
+                    audio.currentTime = start;
+                }
+                if (end > 0 && audio.currentTime >= end) {
+                    audio.pause();
+                    audio.currentTime = start;
+                }
+            });
         }
     });
 
