@@ -35,21 +35,19 @@
 
     .clip-item {
         display: grid;
-        grid-template-columns: auto auto 1fr auto;
+        grid-template-columns: auto 1fr auto;
         gap: var(--space-lg);
         align-items: center;
         padding: var(--space-lg) var(--space-xl);
-    }
-
-    .drag-handle {
-        color: var(--text-muted);
         cursor: grab;
-        padding: var(--space-xs);
-        touch-action: none;
     }
 
-    .drag-handle:active {
+    .clip-item:active {
         cursor: grabbing;
+    }
+
+    .clip-controls {
+        cursor: default;
     }
 
     .sortable-ghost {
@@ -144,7 +142,7 @@
 
     @media (max-width: 768px) {
         .clip-item {
-            grid-template-columns: auto 1fr;
+            grid-template-columns: 1fr;
             gap: var(--space-md);
         }
 
@@ -184,9 +182,6 @@
         {% for object in object_list %}
         <li data-id="{{ object.id }}" class="list-group-item{% if object.last_played %} clip-last-played{% endif %}">
             <div class="clip-item">
-                <div class="drag-handle" title="Drag to reorder">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
-                </div>
                 <div style="display: flex; align-items: center; gap: var(--space-md);">
                     <img src="{{ object.thumbnail_url }}" class="clip-thumbnail" alt="{{ object.title }}">
                     <div class="clip-info">
@@ -286,10 +281,11 @@ $(function() {
     setInterval(updateLastPlayed, 5000);
 
     Sortable.create(document.getElementById('clips'), {
-        handle: '.drag-handle',
         animation: 150,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
+        filter: '.clip-controls',
+        preventOnFilter: false,
         onEnd: function() {
             const order = [...document.querySelectorAll('#clips li[data-id]')]
                 .map(el => parseInt(el.dataset.id));
