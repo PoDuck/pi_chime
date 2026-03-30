@@ -64,6 +64,8 @@ class ChimeTrigger:
 
         def _play():
             try:
+                subprocess.run(['killall', 'mpg123'], stderr=subprocess.DEVNULL)
+                subprocess.run(['killall', 'ffmpeg'], stderr=subprocess.DEVNULL)
                 use_trim = clip.start_time > 0 or clip.end_time > 0
                 if use_trim:
                     ffmpeg_cmd = ['ffmpeg', '-ss', str(clip.start_time)]
