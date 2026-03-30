@@ -61,6 +61,18 @@
         background: var(--bg-card-hover);
     }
 
+    .clip-last-played {
+        border-left: 3px solid var(--accent);
+    }
+
+    .last-played-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
     .clip-thumbnail {
         width: 48px;
         height: 48px;
@@ -170,7 +182,7 @@
 
     <ul id="clips" class="clips list-group">
         {% for object in object_list %}
-        <li data-id="{{ object.id }}" class="list-group-item">
+        <li data-id="{{ object.id }}" class="list-group-item{% if object.last_played %} clip-last-played{% endif %}">
             <div class="clip-item">
                 <div class="drag-handle" title="Drag to reorder">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
@@ -179,7 +191,7 @@
                     <img src="{{ object.thumbnail_url }}" class="clip-thumbnail" alt="{{ object.title }}">
                     <div class="clip-info">
                         <a class="clip-title play" data-id="{{ object.id }}" href="{{ object.file_url }}">{{ object.title }}</a>
-                        <span class="clip-game">{{ object.game }}</span>
+                        <span class="clip-game">{{ object.game }}{% if object.last_played %} &nbsp;<span class="last-played-badge">&#9654; last played</span>{% endif %}</span>
                     </div>
                 </div>
 
