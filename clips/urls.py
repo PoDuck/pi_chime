@@ -8,4 +8,5 @@ urlpatterns = [
     path("update/<int:pk>/", views.ClipUpdateView.as_view(), name="update_clip"),
     path("delete/<int:pk>/", views.ClipDeleteView.as_view(), name="delete_clip"),
     path("trigger/", views.TriggerChime.as_view(), name="trigger_chime"),
+    path("last-played/", views.LastPlayedView.as_view(), name="last_played"),
 ]

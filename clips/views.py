@@ -104,6 +104,12 @@ class ClipDeleteView(DeleteView):
     success_url = reverse_lazy('clip_list')
 
 
+class LastPlayedView(View):
+    def get(self, request):
+        clip = Clip.objects.filter(last_played=True).first()
+        return JsonResponse({"last_played_id": clip.pk if clip else None})
+
+
 class TriggerChime(View):
     def get(self, request):
         clips = list(Clip.objects.all().order_by('order'))

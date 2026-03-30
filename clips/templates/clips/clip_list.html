@@ -248,6 +248,19 @@ $(function() {
         });
     });
 
+    // Poll for last played clip every 5 seconds
+    function updateLastPlayed() {
+        $.getJSON("{% url 'last_played' %}", function(data) {
+            const id = data.last_played_id;
+            $('#clips li').each(function() {
+                const isLastPlayed = parseInt($(this).data('id')) === id;
+                $(this).toggleClass('clip-last-played', isLastPlayed);
+                $(this).find('.last-played-badge').toggle(isLastPlayed);
+            });
+        });
+    }
+    setInterval(updateLastPlayed, 5000);
+
     Sortable.create(document.getElementById('clips'), {
         handle: '.drag-handle',
         animation: 150,
