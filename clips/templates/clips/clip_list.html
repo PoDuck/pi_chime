@@ -35,10 +35,30 @@
 
     .clip-item {
         display: grid;
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: auto auto 1fr auto;
         gap: var(--space-lg);
         align-items: center;
         padding: var(--space-lg) var(--space-xl);
+    }
+
+    .drag-handle {
+        color: var(--text-muted);
+        cursor: grab;
+        padding: var(--space-xs);
+        touch-action: none;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background: var(--bg-elevated);
+    }
+
+    .sortable-chosen {
+        background: var(--bg-card-hover);
     }
 
     .clip-thumbnail {
@@ -112,7 +132,7 @@
 
     @media (max-width: 768px) {
         .clip-item {
-            grid-template-columns: 1fr;
+            grid-template-columns: auto 1fr;
             gap: var(--space-md);
         }
 
@@ -152,6 +172,9 @@
         {% for object in object_list %}
         <li data-id="{{ object.id }}" class="list-group-item">
             <div class="clip-item">
+                <div class="drag-handle" title="Drag to reorder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
+                </div>
                 <div style="display: flex; align-items: center; gap: var(--space-md);">
                     <img src="{{ object.thumbnail_url }}" class="clip-thumbnail" alt="{{ object.title }}">
                     <div class="clip-info">
@@ -191,6 +214,7 @@
 {% endblock content %}
 
 {% block custom_javascript %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
 $(function() {
     const csrftoken = Cookies.get('csrftoken');
@@ -210,6 +234,24 @@ $(function() {
             data: JSON.stringify($(this).data("id")),
             url: "{% url 'clip_list' %}" + $(this).data("id") + "/"
         });
+    });
+
+    Sortable.create(document.getElementById('clips'), {
+        handle: '.drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function() {
+            const order = [...document.querySelectorAll('#clips li[data-id]')]
+                .map(el => parseInt(el.dataset.id));
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(order),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                url: "{% url 'clip_list' %}"
+            });
+        }
     });
 });
 </script>
