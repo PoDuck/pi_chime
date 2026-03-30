@@ -122,7 +122,16 @@ class LastPlayedView(View):
 
 
 class TriggerChime(View):
+    _last_trigger_time = 0
+    COOLDOWN_SECONDS = 3
+
     def get(self, request):
+        import time
+        now = time.time()
+        if now - TriggerChime._last_trigger_time < TriggerChime.COOLDOWN_SECONDS:
+            return JsonResponse({"success": False, "error": "Cooldown active"}, status=200)
+        TriggerChime._last_trigger_time = now
+
         clips = list(Clip.objects.all().order_by('order'))
         
         # Handle empty clip list
