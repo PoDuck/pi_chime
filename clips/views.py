@@ -255,6 +255,8 @@ class PlaylistClipAddView(View):
                 clip=clip,
                 defaults={'order': max_order + 1},
             )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         return redirect('playlist_detail', pk=pk)
 
 
@@ -262,4 +264,6 @@ class PlaylistClipRemoveView(View):
     def post(self, request, pk, clip_pk):
         playlist = get_object_or_404(Playlist, pk=pk)
         PlaylistClip.objects.filter(playlist=playlist, clip_id=clip_pk).delete()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         return redirect('playlist_detail', pk=pk)
