@@ -1,11 +1,11 @@
-from .models import Clip
+from .models import Clip, Playlist, PlaylistClip
 from django.conf import settings
 import os
 import subprocess
 import threading
 
 import json
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.views.generic import CreateView, UpdateView, DeleteView
@@ -13,6 +13,15 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from .forms import ClipUploadForm
 from django.urls import reverse_lazy
+
+
+def get_clips_for_trigger():
+    """Return ordered clip list for the next trigger: active playlist clips, or all clips."""
+    active_playlist = Playlist.objects.filter(is_active=True).first()
+    if active_playlist:
+        playlist_clips = active_playlist.playlist_clips.select_related('clip').order_by('order')
+        return [pc.clip for pc in playlist_clips]
+    return list(Clip.objects.all().order_by('order'))
 
 
 def play_clip(clip):
@@ -49,7 +58,8 @@ class ClipsList(View):
     def get(self, request):
         ctx = {
             'object_list': Clip.objects.all().order_by('order'),
-            'page': 'home',
+            'active_playlist': Playlist.objects.filter(is_active=True).first(),
+            'page': 'clips',
         }
         return render(self.request, self.template_name, context=ctx)
 
@@ -132,8 +142,8 @@ class TriggerChime(View):
             return JsonResponse({"success": False, "error": "Cooldown active"}, status=200)
         TriggerChime._last_trigger_time = now
 
-        clips = list(Clip.objects.all().order_by('order'))
-        
+        clips = get_clips_for_trigger()
+
         # Handle empty clip list
         if not clips:
             return JsonResponse({"success": False, "error": "No clips available"}, status=200)
@@ -158,5 +168,98 @@ class TriggerChime(View):
         
         # Play the clip
         play_clip(clips[next_idx])
-        
+
         return JsonResponse({"success": True}, status=200)
+
+
+class PlaylistListView(View):
+    template_name = 'clips/playlist_list.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            'playlists': Playlist.objects.all(),
+            'page': 'playlists',
+        })
+
+    def post(self, request):
+        name = request.POST.get('name', '').strip()
+        if name:
+            Playlist.objects.create(name=name)
+        return redirect('playlist_list')
+
+
+class PlaylistDetailView(View):
+    template_name = 'clips/playlist_detail.html'
+
+    def get(self, request, pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        playlist_clips = playlist.playlist_clips.select_related('clip').order_by('order')
+        clip_ids = {pc.clip_id for pc in playlist_clips}
+        available_clips = Clip.objects.exclude(pk__in=clip_ids).order_by('order')
+        return render(request, self.template_name, {
+            'playlist': playlist,
+            'playlist_clips': playlist_clips,
+            'available_clips': available_clips,
+            'page': 'playlists',
+        })
+
+    def post(self, request, pk):
+        # AJAX reorder
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            playlist = get_object_or_404(Playlist, pk=pk)
+            data = json.loads(request.body)
+            for idx, clip_id in enumerate(data):
+                PlaylistClip.objects.filter(playlist=playlist, clip_id=clip_id).update(order=idx + 1)
+            return JsonResponse({'success': True})
+        return JsonResponse({'success': False}, status=400)
+
+
+class PlaylistRenameView(View):
+    def post(self, request, pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        name = request.POST.get('name', '').strip()
+        if name:
+            playlist.name = name
+            playlist.save()
+        return redirect('playlist_detail', pk=pk)
+
+
+class PlaylistActivateView(View):
+    def post(self, request, pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        if playlist.is_active:
+            playlist.is_active = False
+            playlist.save()
+        else:
+            Playlist.objects.all().update(is_active=False)
+            playlist.is_active = True
+            playlist.save()
+        return redirect('playlist_list')
+
+
+class PlaylistDeleteView(DeleteView):
+    model = Playlist
+    template_name = 'clips/playlist_confirm_delete.html'
+    success_url = reverse_lazy('playlist_list')
+
+
+class PlaylistClipAddView(View):
+    def post(self, request, pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        clip_id = request.POST.get('clip_id')
+        if clip_id:
+            clip = get_object_or_404(Clip, pk=clip_id)
+            max_order = playlist.playlist_clips.order_by('-order').values_list('order', flat=True).first() or 0
+            PlaylistClip.objects.get_or_create(
+                playlist=playlist,
+                clip=clip,
+                defaults={'order': max_order + 1},
+            )
+        return redirect('playlist_detail', pk=pk)
+
+
+class PlaylistClipRemoveView(View):
+    def post(self, request, pk, clip_pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        PlaylistClip.objects.filter(playlist=playlist, clip_id=clip_pk).delete()
+        return redirect('playlist_detail', pk=pk)

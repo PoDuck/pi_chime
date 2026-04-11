@@ -22,7 +22,7 @@ import RPi.GPIO as GPIO
 import requests
 from time import sleep
 from django.conf import settings
-from clips.models import Clip
+from clips.models import Clip, Playlist
 from tracking.models import Track
 
 SENSOR_PIN = 21
@@ -37,7 +37,12 @@ class ChimeTrigger:
 
     def get_next_clip(self):
         """Get the next clip to play, cycling through in order."""
-        clips = list(Clip.objects.all().order_by("order"))
+        active_playlist = Playlist.objects.filter(is_active=True).first()
+        if active_playlist:
+            playlist_clips = active_playlist.playlist_clips.select_related('clip').order_by('order')
+            clips = [pc.clip for pc in playlist_clips]
+        else:
+            clips = list(Clip.objects.all().order_by("order"))
         if not clips:
             return None
 

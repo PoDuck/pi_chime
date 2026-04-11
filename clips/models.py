@@ -1,6 +1,24 @@
 from django.db import models
 
 
+class Playlist(models.Model):
+    name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+
+class PlaylistClip(models.Model):
+    playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE, related_name='playlist_clips')
+    clip = models.ForeignKey('Clip', on_delete=models.CASCADE, related_name='playlist_clips')
+    order = models.IntegerField(default=100_000)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = [['playlist', 'clip']]
+
+
 class Clip(models.Model):
     title = models.CharField(max_length=100)
     game = models.CharField(max_length=100)

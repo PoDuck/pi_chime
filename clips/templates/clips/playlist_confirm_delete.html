@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Playlist - Chime{% endblock title %}
+
+{% block content %}
+<div class="delete-card card">
+    <div class="card-body">
+        <h5>Delete Playlist</h5>
+        <p>Are you sure you want to delete <strong>{{ object.name }}</strong>?</p>
+        <p style="font-size:0.9rem; color: var(--text-muted);">This will only remove the playlist. Your clips will not be deleted.</p>
+        <div class="delete-actions">
+            <a href="{% url 'playlist_list' %}" class="btn btn-secondary">Cancel</a>
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
