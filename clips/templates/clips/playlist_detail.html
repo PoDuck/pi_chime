@@ -234,7 +234,7 @@
                 </div>
                 <img src="{{ pc.clip.thumbnail_url }}" class="clip-thumb" alt="{{ pc.clip.title }}">
                 <div class="clip-info">
-                    <div class="clip-title-text">{{ pc.clip.title }}</div>
+                    <a class="clip-title-text play" data-id="{{ pc.clip.pk }}" href="{{ pc.clip.file_url }}" title="Play on speakers">{{ pc.clip.title }}</a>
                     <div class="clip-game-text">{{ pc.clip.game }}</div>
                 </div>
                 <audio class="clip-audio" controls
@@ -263,7 +263,7 @@
                 </div>
                 <img src="{{ clip.thumbnail_url }}" class="clip-thumb" alt="{{ clip.title }}">
                 <div class="clip-info">
-                    <div class="clip-title-text">{{ clip.title }}</div>
+                    <a class="clip-title-text play" data-id="{{ clip.pk }}" href="{{ clip.file_url }}" title="Play on speakers">{{ clip.title }}</a>
                     <div class="clip-game-text">{{ clip.game }}</div>
                 </div>
                 <audio class="clip-audio" controls
@@ -308,6 +308,17 @@ $(function() {
         }
     }
     $('audio.clip-audio').each(function() { initAudioTrim(this); });
+
+    // Play on speakers when title is clicked
+    $(document).on('click', '.play', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $.ajax({
+            type: 'PUT',
+            data: JSON.stringify($(this).data('id')),
+            url: '{% url "clip_list" %}' + $(this).data('id') + '/'
+        });
+    });
 
     // Sortable for in-playlist clips
     const playlistEl = document.getElementById('playlist-clips');
