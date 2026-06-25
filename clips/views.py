@@ -24,6 +24,23 @@ def get_clips_for_trigger():
     return list(Clip.objects.all().order_by('order'))
 
 
+def _ensure_mp3(clip):
+    """Convert a non-MP3 clip file to MP3 in-place and update the DB record."""
+    orig_path = os.path.join(settings.MEDIA_ROOT, str(clip.file))
+    if orig_path.lower().endswith('.mp3'):
+        return
+    mp3_relative = os.path.splitext(str(clip.file))[0] + '.mp3'
+    mp3_path = os.path.join(settings.MEDIA_ROOT, mp3_relative)
+    result = subprocess.run(
+        ['ffmpeg', '-y', '-i', orig_path, '-codec:a', 'libmp3lame', '-q:a', '2', '-loglevel', 'quiet', mp3_path],
+        capture_output=True,
+    )
+    if result.returncode == 0:
+        os.remove(orig_path)
+        clip.file = mp3_relative
+        clip.save(update_fields=['file'])
+
+
 def play_clip(clip):
     """Play audio clip using mpg123 via sudo in background thread."""
     file_path = os.path.join(settings.MEDIA_ROOT, str(clip.file))
@@ -107,6 +124,11 @@ class ClipUploadView(CreateView):
         context['page'] = 'create'
         return context
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        _ensure_mp3(self.object)
+        return response
+
 
 class ClipUpdateView(UpdateView):
     model = Clip
@@ -118,6 +140,11 @@ class ClipUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['page'] = 'update'
         return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        _ensure_mp3(self.object)
+        return response
 
 class ClipDeleteView(DeleteView):
     model = Clip
