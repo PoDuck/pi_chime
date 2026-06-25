@@ -725,6 +725,95 @@ body.dragging * {
 }
 
 /* ===================================================
+   Bootstrap Utility Overrides (theme-aware)
+   =================================================== */
+
+.text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.form-text {
+  color: var(--text-secondary) !important;
+}
+
+.form-label,
+.form-check-label,
+.col-form-label {
+  color: var(--text-primary);
+}
+
+hr {
+  border-color: var(--border-subtle);
+  opacity: 1;
+}
+
+/* Tables */
+.table {
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.table > :not(caption) > * > * {
+  background-color: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.table-light,
+.table-light > th,
+.table-light > td {
+  --bs-table-bg: var(--bg-elevated);
+  --bs-table-color: var(--text-secondary);
+  background-color: var(--bg-elevated) !important;
+  color: var(--text-secondary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+/* Outline buttons */
+.btn-outline-secondary {
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  background: transparent;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.btn-outline-primary {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: transparent;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-outline-success {
+  color: var(--success);
+  border-color: var(--success);
+  background: transparent;
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus {
+  background: var(--success);
+  color: white;
+}
+
+/* ===================================================
    Light Mode Theme
    =================================================== */
 

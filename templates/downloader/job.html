@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title|default:"Downloading…" }} — Chime{% endblock %}
+
+{% block custom_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.css">
+<style>
+  /* ---------- trim slider ---------- */
+  .trim-wrapper {
+    position: relative;
+    padding: 24px 0 8px;
+  }
+  #trim-slider {
+    height: 10px;
+  }
+  /* inactive track */
+  #trim-slider.noUi-target {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    box-shadow: none;
+  }
+  #trim-slider .noUi-base,
+  #trim-slider .noUi-connects { border-radius: 4px; }
+  /* selected region between handles */
+  #trim-slider .noUi-connect {
+    background: var(--primary);
+    opacity: 0.85;
+  }
+  /* handles */
+  #trim-slider .noUi-handle {
+    width: 18px !important;
+    height: 28px !important;
+    top: -10px !important;
+    right: -9px !important;
+    border-radius: 4px;
+    background: var(--primary);
+    border: none;
+    box-shadow: var(--shadow-md);
+    cursor: ew-resize;
+  }
+  #trim-slider .noUi-handle::before,
+  #trim-slider .noUi-handle::after { display: none; }
+  /* tooltips */
+  #trim-slider .noUi-tooltip {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    font-size: 0.78rem;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+
+  /* ---------- playhead ---------- */
+  #playhead {
+    position: absolute;
+    top: 16px;
+    bottom: 0;
+    width: 2px;
+    background: var(--danger);
+    pointer-events: none;
+    z-index: 6;
+    transform: translateX(-50%);
+  }
+
+  /* ---------- player ---------- */
+  #media-player {
+    width: 100%;
+    max-height: 420px;
+    border-radius: var(--radius-lg);
+    background: #000;
+    display: block;
+  }
+
+  /* ---------- time row ---------- */
+  .time-badge {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+    letter-spacing: .02em;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* current-time display */
+  #lbl-current {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-2">
+  <div class="col-xl-8 col-lg-10">
+
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <a href="{% url 'downloader' %}" class="text-decoration-none small" style="color: var(--text-secondary);">← Back</a>
+    </div>
+
+    <h2 class="mb-1" id="job-title">{{ job.title|default:"Fetching…" }}</h2>
+    <p class="text-muted small mb-3">{{ job.url }}</p>
+
+    {# ───── PENDING / FETCHING ───── #}
+    {% if job.status == 'pending' or job.status == 'fetching' %}
+    <div class="d-flex align-items-center gap-3 text-muted" id="fetch-spinner">
+      <div class="spinner-border spinner-border-sm"></div>
+      <span id="status-text">{% if job.status == 'fetching' %}Downloading from YouTube…{% else %}Queued…{% endif %}</span>
+    </div>
+
+    {# ───── FETCHED — show player & trim UI ───── #}
+    {% elif job.status == 'fetched' or job.status == 'converting' or job.status == 'done' %}
+
+    {# Player #}
+    <video id="media-player" controls preload="metadata"
+           src="{% url 'downloader_raw' job.pk %}"></video>
+
+    {# Trim slider #}
+    <div class="trim-wrapper mt-3">
+      <div id="playhead"></div>
+      <div id="trim-slider"></div>
+    </div>
+
+    {# Time labels #}
+    <div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+      <span class="time-badge" id="lbl-start">0:00.0</span>
+      <span id="lbl-current">0:00.0</span>
+      <span class="time-badge" id="lbl-end">0:00.0</span>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+      <button class="btn btn-sm btn-outline-secondary" id="btn-set-start" title="Move the start handle to the current playback position">⟵ Start at current position</button>
+      <button class="btn btn-sm btn-outline-secondary" id="btn-set-end" title="Move the end handle to the current playback position">End at current position ⟶</button>
+      <button class="btn btn-sm btn-outline-primary ms-2" id="btn-preview">▶ Preview clip</button>
+    </div>
+
+    {# Convert form #}
+    {% if job.status == 'fetched' or job.status == 'done' %}
+    <hr>
+    <h5 class="mb-3">{% if job.status == 'done' %}Convert again{% else %}Convert{% endif %}</h5>
+    <form method="post" action="{% url 'downloader_convert' job.pk %}" id="convert-form">
+      {% csrf_token %}
+      <input type="hidden" name="start_time" id="input-start" value="0">
+      <input type="hidden" name="end_time"   id="input-end"   value="{{ job.duration }}">
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label class="form-label fw-semibold">Output type</label>
+          <div class="d-flex gap-4">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="format_type" id="ft-audio" value="audio" checked>
+              <label class="form-check-label" for="ft-audio">Audio only</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="format_type" id="ft-video" value="video">
+              <label class="form-check-label" for="ft-video">Video</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6" id="audio-fmt-col">
+          <label class="form-label fw-semibold">Audio format</label>
+          <select name="output_format" id="sel-audio" class="form-select">
+            <option value="mp3">MP3</option>
+            <option value="m4a">M4A</option>
+            <option value="aac">AAC</option>
+            <option value="flac">FLAC</option>
+            <option value="wav">WAV</option>
+            <option value="ogg">OGG Vorbis</option>
+            <option value="opus">Opus</option>
+          </select>
+        </div>
+        <div class="col-sm-6 d-none" id="video-fmt-col">
+          <label class="form-label fw-semibold">Video format</label>
+          <select name="output_format" id="sel-video" class="form-select">
+            <option value="mp4">MP4</option>
+            <option value="webm">WebM</option>
+            <option value="mkv">MKV</option>
+            <option value="avi">AVI</option>
+            <option value="mov">MOV</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Convert</button>
+    </form>
+    {% endif %}
+
+    {# Converting spinner #}
+    {% if job.status == 'converting' %}
+    <div class="d-flex align-items-center gap-3 text-muted mt-3" id="convert-spinner">
+      <div class="spinner-border spinner-border-sm"></div>
+      <span>Converting…</span>
+    </div>
+    {% endif %}
+
+    {# Done — download button #}
+    {% if job.status == 'done' %}
+    <div class="alert alert-success d-flex align-items-center gap-3 mt-3" id="done-alert">
+      <span>Ready!</span>
+      <a href="{% url 'downloader_download' job.pk %}" class="btn btn-success btn-sm">
+        Download {{ job.output_format|upper }}
+      </a>
+    </div>
+    {% endif %}
+
+    {# ───── ERROR ───── #}
+    {% elif job.status == 'error' %}
+    <div class="alert alert-danger">
+      <strong>Error</strong>
+      {% if job.error_message %}
+      <pre class="mt-2 mb-0 small" style="white-space:pre-wrap;">{{ job.error_message }}</pre>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block custom_javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.js"></script>
+<script>
+const JOB_STATUS = "{{ job.status }}";
+const DURATION   = {{ job.duration|default:0 }};
+const STATUS_URL = "{% url 'downloader_job_status' job.pk %}";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function fmt(sec) {
+  const s   = Math.floor(sec);
+  const dec = Math.round((sec - s) * 10);
+  const m   = Math.floor(s / 60);
+  const ss  = (s % 60).toString().padStart(2, '0');
+  return `${m}:${ss}.${dec}`;
+}
+
+// ── Polling for pending / fetching ──────────────────────────────────────────
+if (JOB_STATUS === 'pending' || JOB_STATUS === 'fetching') {
+  (function poll() {
+    setTimeout(function () {
+      $.getJSON(STATUS_URL, function (d) {
+        if (d.title) $('#job-title').text(d.title);
+        if (d.status === 'fetching') {
+          $('#status-text').text('Downloading from YouTube…');
+          poll();
+        } else if (d.status === 'fetched') {
+          location.reload();
+        } else if (d.status === 'error') {
+          $('#fetch-spinner').html(
+            '<div class="alert alert-danger"><strong>Error:</strong> ' +
+            $('<div>').text(d.error).html() + '</div>'
+          );
+        } else {
+          poll();
+        }
+      }).fail(poll);
+    }, 2000);
+  })();
+}
+
+// ── Polling for converting ───────────────────────────────────────────────────
+if (JOB_STATUS === 'converting') {
+  (function poll() {
+    setTimeout(function () {
+      $.getJSON(STATUS_URL, function (d) {
+        if (d.status === 'done') {
+          location.reload();
+        } else if (d.status === 'error') {
+          $('#convert-spinner').html(
+            '<div class="alert alert-danger"><strong>Error:</strong> ' +
+            $('<div>').text(d.error).html() + '</div>'
+          );
+        } else {
+          poll();
+        }
+      }).fail(poll);
+    }, 2000);
+  })();
+}
+
+// ── Trim slider + player ─────────────────────────────────────────────────────
+if (JOB_STATUS === 'fetched' || JOB_STATUS === 'done') {
+  const player   = document.getElementById('media-player');
+  const playhead = document.getElementById('playhead');
+  const sliderEl = document.getElementById('trim-slider');
+  const duration = DURATION || 0;
+
+  let startVal = 0;
+  let endVal   = duration;
+
+  // Build slider
+  noUiSlider.create(sliderEl, {
+    start:   [0, duration],
+    connect: true,
+    range:   { min: 0, max: duration || 1 },
+    step:    0.1,
+    tooltips: [
+      { to: fmt, from: Number },
+      { to: fmt, from: Number },
+    ],
+  });
+
+  // Slider → labels + hidden inputs
+  sliderEl.noUiSlider.on('update', function (vals) {
+    startVal = parseFloat(vals[0]);
+    endVal   = parseFloat(vals[1]);
+    document.getElementById('lbl-start').textContent   = fmt(startVal);
+    document.getElementById('lbl-end').textContent     = fmt(endVal);
+    document.getElementById('input-start').value = startVal > 0 ? startVal : 0;
+    document.getElementById('input-end').value   = endVal < duration ? endVal : 0;
+  });
+
+  // Dragging a handle seeks the player
+  sliderEl.noUiSlider.on('change', function (vals, handle) {
+    player.currentTime = parseFloat(vals[handle]);
+  });
+
+  // Player → playhead + current-time label
+  player.addEventListener('timeupdate', function () {
+    const pct = duration > 0 ? (player.currentTime / duration) * 100 : 0;
+    playhead.style.left = pct + '%';
+    document.getElementById('lbl-current').textContent = fmt(player.currentTime);
+
+    // Always stop at the end handle
+    if (!player.paused && player.currentTime >= endVal) {
+      player.pause();
+      player.currentTime = endVal;
+    }
+  });
+
+  // Set start / end from current position
+  document.getElementById('btn-set-start').addEventListener('click', function () {
+    sliderEl.noUiSlider.set([player.currentTime, null]);
+  });
+  document.getElementById('btn-set-end').addEventListener('click', function () {
+    sliderEl.noUiSlider.set([null, player.currentTime]);
+  });
+
+  // Preview clip: jump to start and play (timeupdate will stop at end)
+  document.getElementById('btn-preview').addEventListener('click', function () {
+    player.currentTime = startVal;
+    player.play();
+  });
+
+  // Format type toggle
+  $('input[name="format_type"]').on('change', function () {
+    if ($(this).val() === 'audio') {
+      $('#audio-fmt-col').removeClass('d-none');
+      $('#video-fmt-col').addClass('d-none');
+      $('#sel-audio').attr('name', 'output_format');
+      $('#sel-video').removeAttr('name');
+    } else {
+      $('#audio-fmt-col').addClass('d-none');
+      $('#video-fmt-col').removeClass('d-none');
+      $('#sel-video').attr('name', 'output_format');
+      $('#sel-audio').removeAttr('name');
+    }
+  });
+}
+</script>
+{% endblock %}

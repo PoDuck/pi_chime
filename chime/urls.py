@@ -26,6 +26,7 @@ urlpatterns = [
     # path('', TemplateView.as_view(template_name='index.html'), name='index'),
     path('clips/', include('clips.urls')),
     path('tracking/', include('tracking.urls')),
+    path('downloader/', include('downloader.urls')),
     path('admin/', admin.site.urls),
 ] + debug_toolbar_urls()
 

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}YouTube Downloader — Chime{% endblock %}
+
+{% block content %}
+<div class="row mt-2">
+  <div class="col-lg-6">
+    <h2 class="mb-4">YouTube Downloader</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="input-group mb-2">
+        <input type="url" name="url" class="form-control form-control-lg"
+               placeholder="https://www.youtube.com/watch?v=..." required autofocus>
+        <button type="submit" class="btn btn-primary px-4">Fetch</button>
+      </div>
+      {% if error %}<div class="text-danger small mt-1">{{ error }}</div>{% endif %}
+      <div class="form-text">The video will be downloaded so you can preview and trim it before converting.</div>
+    </form>
+  </div>
+</div>
+
+{% if jobs %}
+<div class="row mt-5">
+  <div class="col-lg-9">
+    <h5 class="mb-3">Recent jobs</h5>
+    <table class="table table-sm table-hover align-middle">
+      <thead class="table-light">
+        <tr><th>Title / URL</th><th>Format</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td class="text-truncate" style="max-width:320px;">
+            <a href="{% url 'downloader_job' job.pk %}">{{ job.title|default:job.url }}</a>
+          </td>
+          <td>{% if job.output_format %}{{ job.output_format|upper }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td>
+            {% if job.status == 'done' %}<span class="badge bg-success">Done</span>
+            {% elif job.status == 'error' %}<span class="badge bg-danger">Error</span>
+            {% elif job.status == 'converting' %}<span class="badge bg-warning text-dark">Converting</span>
+            {% elif job.status == 'fetched' %}<span class="badge bg-info text-dark">Ready</span>
+            {% elif job.status == 'fetching' %}<span class="badge bg-secondary">Fetching</span>
+            {% else %}<span class="badge bg-secondary">Pending</span>{% endif %}
+          </td>
+          <td>
+            {% if job.status == 'done' %}
+              <a href="{% url 'downloader_download' job.pk %}" class="btn btn-sm btn-outline-success">Download</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'clips',
     'tracking',
+    'downloader',
 ]
 
 # Only add debug toolbar in DEBUG mode
